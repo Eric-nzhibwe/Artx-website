@@ -1,0 +1,137 @@
+{% extends "emails/base.html" %}
+
+{% block title %}👑 Alliance Created! You're Now a Leader! 🛡️{% endblock %}
+
+{% block content %}
+<div class="greeting">
+    LEADERSHIP ACTIVATED! Your Alliance is Born! 👑
+</div>
+
+<div class="message">
+    <p>🔥 <strong>{{ user.display_name|default:user.username }}</strong>, you absolute LEGEND!</p>
+    
+    <p>You've just done something incredible - you've created your own alliance! You're no longer just a player, you're a <strong>LEADER</strong>, a commander, a force that will shape the future of competitive gaming on ARTX!</p>
+</div>
+
+<div class="highlight-box" style="background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #2c3e50;">
+    <h2 style="margin-bottom: 20px; font-size: 2.2em;">
+        👑 ALLIANCE FOUNDED! 👑
+    </h2>
+    <div style="font-size: 1.8em; margin: 20px 0; font-weight: bold;">
+        🛡️ {{ alliance.name }}
+    </div>
+    <div style="font-size: 1.2em; margin: 15px 0; font-style: italic;">
+        "{{ alliance.description|default:"United We Dominate!" }}"
+    </div>
+    <p style="font-size: 1.1em; margin-top: 15px;">You are the Founder & Supreme Leader!</p>
+</div>
+
+<div class="message">
+    <h3 style="color: #667eea; margin-bottom: 15px;">👑 Your Leadership Powers</h3>
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">👥</span>
+            <strong>Recruit Elite Members:</strong> Handpick the best players to join your alliance
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">🎯</span>
+            <strong>Set Alliance Strategy:</strong> Define your team's approach to domination
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">🏆</span>
+            <strong>Enter Team Tournaments:</strong> Lead your alliance into epic battles
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">💰</span>
+            <strong>Manage Alliance Treasury:</strong> Distribute rewards and manage resources
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">🎖️</span>
+            <strong>Promote Members:</strong> Recognize excellence and build your command structure
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">🚀</span>
+            <strong>Alliance Upgrades:</strong> Unlock new features and capabilities for your team
+        </li>
+    </ul>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-item">
+        <span class="stat-value">1</span>
+        <div class="stat-label">Current Members</div>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">{{ alliance.max_members|default:50 }}</span>
+        <div class="stat-label">Max Capacity</div>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">Level 1</span>
+        <div class="stat-label">Alliance Level</div>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">0</span>
+        <div class="stat-label">Victories</div>
+    </div>
+</div>
+
+<div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #ffd700;">
+    <h4 style="color: #ffd700; margin-bottom: 10px;">🎯 Your Alliance Vision</h4>
+    <p style="margin: 5px 0; color: #555;"><strong>Alliance Name:</strong> {{ alliance.name }}</p>
+    <p style="margin: 5px 0; color: #555;"><strong>Alliance Tag:</strong> [{{ alliance.tag }}]</p>
+    <p style="margin: 5px 0; color: #555;"><strong>Description:</strong> {{ alliance.description|default:"Competitive Excellence" }}</p>
+    <p style="margin: 10px 0 0 0; color: #555; font-style: italic;">"{{ alliance.description|default:"This alliance was founded to bring together the most skilled and dedicated players. Together, we will conquer every challenge and establish our dominance in the gaming world." }}"</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="#" class="cta-button">👑 Manage Your Alliance</a>
+</div>
+
+<div class="message">
+    <h3 style="color: #667eea; margin-bottom: 15px;">🚀 Building Your Empire - Next Steps</h3>
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">🎨</span>
+            <strong>Customize Your Alliance:</strong> Set your logo, colors, and alliance identity
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">📢</span>
+            <strong>Send Invitations:</strong> Recruit your first elite members
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">📋</span>
+            <strong>Set Alliance Rules:</strong> Establish guidelines and expectations
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">🏆</span>
+            <strong>Plan Your First Tournament:</strong> Choose your alliance's debut competition
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">💬</span>
+            <strong>Create Alliance Chat:</strong> Set up communication channels for your team
+        </li>
+    </ul>
+</div>
+
+<div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+    <h4 style="margin-bottom: 10px;">⚡ Leadership Challenge</h4>
+    <p style="margin: 0;">Great leaders aren't born, they're forged in the fires of competition. Your alliance is your legacy - make it legendary!</p>
+</div>
+
+<div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #28a745; margin: 20px 0;">
+    <h4 style="color: #28a745; margin-bottom: 10px;">💡 Leadership Pro Tips</h4>
+    <ul style="margin: 10px 0; padding-left: 20px; color: #555;">
+        <li>Recruit players who complement your skills, not just mirror them</li>
+        <li>Set clear goals and celebrate every victory, no matter how small</li>
+        <li>Lead by example - be the player others aspire to become</li>
+        <li>Communication is key - keep your alliance informed and motivated</li>
+        <li>Remember: A strong alliance makes every member stronger</li>
+    </ul>
+</div>
+
+<div class="message">
+    <p>👑 <strong>Congratulations, Alliance Leader {{ user.display_name|default:user.username }}!</strong></p>
+    <p>Your journey from player to leader begins now. Build your empire, forge unbreakable bonds, and show the gaming world what true leadership looks like!</p>
+    <p><strong>The future of {{ alliance.name }} is in your hands. Make it LEGENDARY! 🚀🛡️</strong></p>
+</div>
+{% endblock %}

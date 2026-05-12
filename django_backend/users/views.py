@@ -1,0 +1,340 @@
+"""
+User views for ARTX Platform API
+"""
+from rest_framework import generics, status, permissions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import login
+from django.db.models import F, Window
+from django.db.models.functions import RowNumber
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from .models import User, UserActivity, UserSubmission
+from .serializers import (
+    UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer,
+    UserActivitySerializer, UserSubmissionSerializer, LeaderboardSerializer,
+    SocialConnectionSerializer
+)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class UserRegistrationView(generics.CreateAPIView):
+    """User registration endpoint"""
+    queryset = User.objects.all()
+    serializer_class = UserRegistrationSerializer
+    permission_classes = [permissions.AllowAny]
+    
+    def create(self, request, *args, **kwargs):
+        print(f"📝 Registration request received: {request.method}")
+        print(f"📊 Request data: {request.data}")
+        print(f"📋 Content type: {request.content_type}")
+        
+        serializer = self.get_serializer(data=request.data)
+        
+        if not serializer.is_valid():
+            print(f"❌ Registration serializer errors: {serializer.errors}")
+            return Response({
+                'error': 'Invalid data',
+                'details': serializer.errors,
+                'message': str(serializer.errors)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = serializer.save()
+        
+        # Create token for immediate login
+        token, created = Token.objects.get_or_create(user=user)
+        
+        # Send welcome email
+        try:
+            from notifications.tasks import send_welcome_email
+            send_welcome_email(user.id)
+            print(f"✅ Welcome email sent to {user.email}")
+        except Exception as e:
+            print(f"⚠️ Could not send welcome email: {e}")
+            # Don't fail registration if email fails
+        
+        return Response({
+            'user': UserProfileSerializer(user).data,
+            'token': token.key,
+            'message': 'Registration successful! Welcome to ARTX!'
+        }, status=status.HTTP_201_CREATED)
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def login_view(request):
+    """User login endpoint"""
+    print(f"🔐 Login request received: {request.method}")
+    print(f"📊 Request data: {request.data}")
+    print(f"📋 Content type: {request.content_type}")
+    
+    serializer = UserLoginSerializer(data=request.data)
+    
+    if not serializer.is_valid():
+        print(f"❌ Serializer errors: {serializer.errors}")
+        error_message = str(serializer.errors)
+        return Response({
+            'error': 'Invalid data',
+            'details': serializer.errors,
+            'message': error_message
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    user = serializer.validated_data['user']
+    
+    # Generate OTP for two-factor authentication
+    otp, session_id = otp_service.create_otp(user)
+    
+    # Send OTP via email
+    otp_sent = otp_service.send_otp_email(user, otp)
+    
+    if not otp_sent:
+        print(f"⚠️ Failed to send OTP email, proceeding without 2FA")
+        # Fallback: login without OTP if email fails
+        login(request, user)
+        token, created = Token.objects.get_or_create(user=user)
+        
+        return Response({
+            'user': UserProfileSerializer(user).data,
+            'token': token.key,
+            'message': f'Welcome back! 🔥'
+        })
+    
+    print(f"✅ OTP sent to {user.email} for user: {user.username}")
+    
+    # Return response indicating OTP is required
+    return Response({
+        'requires_otp': True,
+        'session_id': session_id,
+        'contact': user.email,
+        'message': 'OTP sent to your email. Please verify to continue.'
+    })
+
+
+@api_view(['POST'])
+def logout_view(request):
+    """User logout endpoint"""
+    if request.user.is_authenticated:
+        # Delete token
+        try:
+            request.user.auth_token.delete()
+        except:
+            pass
+    
+    return Response({'message': 'Logged out successfully'})
+
+
+class UserProfileView(generics.RetrieveUpdateAPIView):
+    """User profile endpoint"""
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_object(self):
+        return self.request.user
+
+
+class UserActivitiesView(generics.ListAPIView):
+    """User activities endpoint"""
+    serializer_class = UserActivitySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return UserActivity.objects.filter(user=self.request.user)[:20]
+
+
+class SubmitAnswerView(generics.CreateAPIView):
+    """Submit challenge answer endpoint"""
+    serializer_class = UserSubmissionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        submission = serializer.save()
+        
+        # Return updated user profile
+        user_data = UserProfileSerializer(request.user).data
+        
+        return Response({
+            'submission': UserSubmissionSerializer(submission).data,
+            'user': user_data,
+            'message': f"{'Correct! +' + str(submission.points_earned) + ' prestige' if submission.is_correct else 'Incorrect. Try again!'}"
+        }, status=status.HTTP_201_CREATED)
+
+
+class LeaderboardView(generics.ListAPIView):
+    """Leaderboard endpoint"""
+    serializer_class = LeaderboardSerializer
+    permission_classes = [permissions.AllowAny]
+    
+    def get_queryset(self):
+        # Add rank annotation
+        queryset = User.objects.annotate(
+            rank=Window(
+                expression=RowNumber(),
+                order_by=F('prestige_points').desc()
+            )
+        ).order_by('-prestige_points')[:50]
+        
+        return queryset
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def user_stats_view(request):
+    """Get user statistics"""
+    user = request.user
+    
+    # Calculate additional stats
+    recent_activities = UserActivity.objects.filter(user=user)[:10]
+    recent_submissions = UserSubmission.objects.filter(user=user)[:10]
+    
+    # Find user rank
+    user_rank = User.objects.filter(prestige_points__gt=user.prestige_points).count() + 1
+    total_users = User.objects.count()
+    
+    return Response({
+        'user': UserProfileSerializer(user).data,
+        'rank': user_rank,
+        'total_users': total_users,
+        'recent_activities': UserActivitySerializer(recent_activities, many=True).data,
+        'recent_submissions': UserSubmissionSerializer(recent_submissions, many=True).data,
+    })
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def add_social_connection_view(request):
+    """Add social media connection"""
+    serializer = SocialConnectionSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    
+    user = request.user
+    user.add_social_connection(
+        platform=serializer.validated_data['platform'],
+        username=serializer.validated_data['username'],
+        verified=serializer.validated_data.get('verified', False),
+        profile_image_url=serializer.validated_data.get('profile_image_url')
+    )
+    
+    return Response({
+        'message': f"Successfully connected {serializer.validated_data['platform']} account!",
+        'social_connections': user.get_social_connections()
+    })
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def remove_social_connection_view(request, platform):
+    """Remove social media connection"""
+    user = request.user
+    connections = user.get_social_connections()
+    
+    if platform in connections:
+        del connections[platform]
+        user.social_connections = connections
+        user.save()
+        
+        return Response({
+            'message': f"Successfully disconnected {platform} account",
+            'social_connections': user.get_social_connections()
+        })
+    else:
+        return Response({
+            'error': f"No {platform} connection found"
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+# ==================== OTP ENDPOINTS ====================
+
+from .otp_service import otp_service
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def verify_otp_view(request):
+    """Verify OTP and complete login"""
+    session_id = request.data.get('session_id')
+    otp_input = request.data.get('otp')
+    username = request.data.get('username')
+    
+    if not all([session_id, otp_input, username]):
+        return Response({
+            'error': 'Missing required fields'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Verify OTP
+    success, message, user_id = otp_service.verify_otp(session_id, otp_input)
+    
+    if not success:
+        return Response({
+            'error': message
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Get user
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({
+            'error': 'User not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    # Create/get token
+    token, created = Token.objects.get_or_create(user=user)
+    
+    # Log the user in
+    login(request, user)
+    
+    print(f"✅ OTP verified and user logged in: {user.username}")
+    
+    return Response({
+        'user': UserProfileSerializer(user).data,
+        'token': token.key,
+        'message': 'Login successful!'
+    })
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def resend_otp_view(request):
+    """Resend OTP"""
+    session_id = request.data.get('session_id')
+    username = request.data.get('username')
+    
+    if not all([session_id, username]):
+        return Response({
+            'error': 'Missing required fields'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Check if can resend
+    can_resend, message = otp_service.can_resend(session_id)
+    if not can_resend:
+        return Response({
+            'error': message
+        }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+    
+    # Get user
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return Response({
+            'error': 'User not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    # Generate new OTP
+    otp, new_session_id = otp_service.create_otp(user, session_id)
+    
+    # Send OTP
+    otp_service.send_otp_email(user, otp)
+    
+    # Mark as resent
+    otp_service.mark_resent(session_id)
+    
+    print(f"✅ OTP resent to {user.email}")
+    
+    return Response({
+        'message': 'OTP sent successfully',
+        'session_id': new_session_id
+    })

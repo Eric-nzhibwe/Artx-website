@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link rel="icon" type="image/jpeg" href="../images/ARTX.jpg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../styles/styles.css">
+    <link rel="stylesheet" href="../styles/user.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo" onclick="window.location.href='../index.html'"><i class="fas fa-fire</i>ARTX</div>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav class="nav" id="mainNav">
+                <button class="nav-btn" onclick="window.location.href='../index.html'">Dashboard</button>
+                <button class="nav-btn" onclick="window.location.href='challenges.html'">Challenges</button>
+                <button class="nav-btn" onclick="window.location.href='community.html'">Community</button>
+                <button class="nav-btn" onclick="window.location.href='messenger.html'">Messenger</button>
+                <button class="nav-btn active">Profile</button>
+            </nav>
+            <!-- User Menu Dropdown -->
+                <div class="user-menu-dropdown">
+                    <button class="btn-user-menu" onclick="toggleUserMenu()">
+                        <i class="fas fa-user-circle"></i>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-content" id="userDropdown">
+                        <a href="pages/wallet.html">
+                            <i class="fas fa-wallet"></i> My Wallet
+                        </a>
+                        <a href="pages/chatbot.html">
+                            <i class="fas fa-robot"></i> AI Assistant
+                        </a>
+                        <a href="#" onclick="openMessenger(); return false;">
+                            <i class="fas fa-comments"></i> Messenger
+                            <span class="unread-badge" id="unreadBadge" style="display: none;">0</span>
+                        </a>
+                        <a href="pages/user.html">
+                            <i class="fas fa-user"></i> User Profile
+                        </a>
+                        <div class="user-info">
+                <div class="wallet-balance-badge" id="walletBalanceBadge" onclick="window.location.href='pages/wallet.html'" style="cursor: pointer; display: none;">
+                    <i class="fas fa-wallet"></i>
+                    <span id="walletBalance">K0.00</span>
+                </div>
+                <div class="streak-badge" id="streakBadge">
+                    <span class="streak-icon"><i class="fas fa-fire"></i></span>
+                    <span id="streakCount">0</span>
+                </div>
+                <span class="prestige-badge" id="userPrestige">0</span>
+                <div class="tier-badge" id="tierBadge">Bronze</div>
+                <span class="username" id="username">Player</span>
+            
+                        <a href="#" onclick="logout(); return false;">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Profile Hero -->
+        <div class="profile-hero">
+            <div class="profile-cover"></div>
+            <div class="profile-main">
+                <div class="avatar-wrapper">
+                    <div class="avatar" id="avatarDisplay">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <label class="avatar-edit" for="avatarInput" title="Change photo">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" id="avatarInput" accept="image/*" style="display:none"
+                        onchange="uploadAvatar(this)">
+                </div>
+                <div class="profile-identity">
+                    <h1 id="profileDisplayName">Loading...</h1>
+                    <span class="profile-username" id="profileUsername">@username</span>
+                    <div class="profile-badges">
+                        <span class="badge-tier" id="profileTier">Bronze</span>
+                        <span class="badge-rank" id="profileRank">Novice</span>
+                        <span class="badge-verified" id="profileVerified" style="display:none">
+                            <i class="fas fa-check-circle"></i> Verified
+                        </span>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button class="btn-primary" onclick="openEditModal()">
+                        <i class="fas fa-edit"></i> Edit Profile
+                    </button>
+                    <button class="btn-secondary" onclick="window.location.href='messenger.html'">
+                        <i class="fas fa-comment"></i> Message
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-pill">
+                <span class="stat-pill-value" id="statPrestige">0</span>
+                <span class="stat-pill-label">Prestige</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-pill-value" id="statLevel">1</span>
+                <span class="stat-pill-label">Level</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-pill-value" id="statStreak">0</span>
+                <span class="stat-pill-label">Day Streak</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-pill-value" id="statWins">0</span>
+                <span class="stat-pill-label">Tournament Wins</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-pill-value" id="statSuccessRate">0%</span>
+                <span class="stat-pill-label">Success Rate</span>
+            </div>
+            <div class="stat-pill">
+                <span class="stat-pill-value" id="statEarnings">K0.00</span>
+                <span class="stat-pill-label">Total Earned</span>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="profile-grid">
+
+            <!-- Left Column -->
+            <div class="profile-left">
+
+                <!-- About Card -->
+                <div class="profile-card">
+                    <h3><i class="fas fa-user-circle"></i> About</h3>
+                    <p class="bio-text" id="profileBio">No bio yet.</p>
+                    <div class="info-row">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Joined <span id="profileJoined">—</span></span>
+                    </div>
+                    <div class="info-row">
+                        <i class="fas fa-envelope"></i>
+                        <span id="profileEmail">—</span>
+                    </div>
+                    <div class="info-row">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Verification Level <span id="profileVerLevel">0</span></span>
+                    </div>
+                </div>
+
+                <!-- Prestige Progress -->
+                <div class="profile-card">
+                    <h3><i class="fas fa-star"></i> Prestige Progress</h3>
+                    <div class="prestige-display">
+                        <span id="prestigePoints">0</span>
+                        <span class="prestige-sep">/</span>
+                        <span id="prestigeNext">100</span>
+                        <span class="prestige-label">pts to next milestone</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="prestigeBar" style="width: 0%"></div>
+                    </div>
+                    <div class="tier-ladder">
+                        <div class="tier-step" data-min="0">Bronze</div>
+                        <div class="tier-step" data-min="200">Silver</div>
+                        <div class="tier-step" data-min="500">Gold</div>
+                        <div class="tier-step" data-min="1000">Platinum</div>
+                        <div class="tier-step" data-min="1500">Diamond</div>
+                        <div class="tier-step" data-min="2500">Elite</div>
+                        <div class="tier-step" data-min="5000">Legendary</div>
+                    </div>
+                </div>
+
+                <!-- Social Connections -->
+                <div class="profile-card">
+                    <h3><i class="fas fa-share-alt"></i> Social Connections</h3>
+                    <div id="socialList" class="social-list">
+                        <p class="empty-state">No social accounts connected.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column -->
+            <div class="profile-right">
+
+                <!-- Performance Stats -->
+                <div class="profile-card">
+                    <h3><i class="fas fa-chart-bar"></i> Performance</h3>
+                    <div class="perf-grid">
+                        <div class="perf-item">
+                            <div class="perf-value" id="perfSubmissions">0</div>
+                            <div class="perf-label">Total Submissions</div>
+                        </div>
+                        <div class="perf-item">
+                            <div class="perf-value success" id="perfCorrect">0</div>
+                            <div class="perf-label">Correct</div>
+                        </div>
+                        <div class="perf-item">
+                            <div class="perf-value danger" id="perfWrong">0</div>
+                            <div class="perf-label">Incorrect</div>
+                        </div>
+                        <div class="perf-item">
+                            <div class="perf-value gold" id="perfWins">0</div>
+                            <div class="perf-label">Tournament Wins</div>
+                        </div>
+                    </div>
+                    <div class="success-bar-wrap">
+                        <div class="success-bar-label">
+                            <span>Success Rate</span>
+                            <span id="successRateLabel">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill success-fill" id="successBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="profile-card">
+                    <h3><i class="fas fa-history"></i> Recent Activity</h3>
+                    <div id="activityList" class="activity-list">
+                        <div class="loading-state"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2><i class="fas fa-edit"></i> Edit Profile</h2>
+            <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" class="modal-input" id="editDisplayName" placeholder="Your display name"
+                    maxlength="100">
+            </div>
+            <div class="form-group">
+                <label>Bio</label>
+                <textarea class="modal-input" id="editBio" placeholder="Tell the community about yourself..." rows="3"
+                    maxlength="500"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" class="modal-input" id="editUsername" placeholder="username" maxlength="50">
+            </div>
+            <div class="form-actions">
+                <button class="btn-primary" onclick="saveProfile()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+            </div>
+            <div id="editError" class="edit-error" style="display:none"></div>
+        </div>
+    </div>
+
+    <script src="../scripts/app.js"></script>
+    <script src="../scripts/user.js"></script>
+</body>
+</html>

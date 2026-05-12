@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet</title>
+    <link rel="stylesheet" href="../styles/styles.css">
+    <link rel="stylesheet" href="../styles/wallet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="wallet-container">
+        <!-- Wallet Header -->
+        <div class="wallet-header">
+            <button class="back-btn" onclick="window.location.href='../index.html'">
+                <i class="fas fa-arrow-left"></i> Back
+            </butsston>
+            <h1><i class="fas fa-wallet"></i> My Wallet</h1>
+        </div>
+
+        <!-- Balance Cards -->
+        <div class="balance-section">
+            <div class="balance-card main-balance">
+                <div class="balance-label">Available Balance</div>
+                <div class="balance-amount" id="availableBalance">K0.00</div>
+                <div class="balance-currency" id="walletCurrency">ZMW</div>
+            </div>
+
+            <div class="balance-stats">
+                <div class="stat-card">
+                    <i class="fas fa-arrow-down"></i>
+                    <div class="stat-label">Total Deposited</div>
+                    <div class="stat-value" id="totalDeposited">K0.00</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-trophy"></i>
+                    <div class="stat-label">Total Earned</div>
+                    <div class="stat-value" id="totalEarned">K0.00</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-arrow-up"></i>
+                    <div class="stat-label">Total Withdrawn</div>
+                    <div class="stat-value" id="totalWithdrawn">K0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="action-btn deposit-btn" onclick="showDepositModal()">
+                <i class="fas fa-plus-circle"></i> Deposit
+            </button>
+            <button class="action-btn withdraw-btn" onclick="showWithdrawModal()">
+                <i class="fas fa-minus-circle"></i> Withdraw
+            </button>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="transaction-section">
+            <div class="section-header">
+                <h2><i class="fas fa-history"></i> Transaction History</h2>
+                <select id="transactionFilter" onchange="filterTransactions()">
+                    <option value="">All Transactions</option>
+                    <option value="deposit">Deposits</option>
+                    <option value="withdrawal">Withdrawals</option>
+                    <option value="earning">Earnings</option>
+                    <option value="payment">Payments</option>
+                </select>
+            </div>
+
+            <div id="transactionList" class="transaction-list">
+                <!-- Transactions will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="depositModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDepositModal()">&times;</span>
+            <h2><i class="fas fa-plus-circle"></i> Deposit Funds</h2>
+            
+            <form id="depositForm" onsubmit="handleDeposit(event)">
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" id="depositAmount" step="0.01" min="1" required placeholder="Enter amount">
+                </div>
+
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select id="depositProvider" onchange="handleProviderChange('deposit')" required>
+                        <option value="">Select payment method</option>
+                        <option value="stripe">Card (Stripe)</option>
+                        <option value="pawapay">Mobile Money (PawaPay)</option>
+                        <option value="paystack">Paystack</option>
+                    </select>
+                </div>
+
+                <!-- PawaPay Fields -->
+                <div id="depositPawapayFields" style="display: none;">
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="depositPhone" placeholder="+260977123456">
+                    </div>
+                    <div class="form-group">
+                        <label>Mobile Money Provider</label>
+                        <select id="depositCorrespondent">
+                            <option value="">Select provider</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-check"></i> Deposit Now
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div id="withdrawModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeWithdrawModal()">&times;</span>
+            <h2><i class="fas fa-minus-circle"></i> Withdraw Funds</h2>
+            
+            <form id="withdrawForm" onsubmit="handleWithdraw(event)">
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" id="withdrawAmount" step="0.01" min="1" required placeholder="Enter amount">
+                    <small id="withdrawMax"></small>
+                </div>
+
+                <div class="form-group">
+                    <label>Withdrawal Method</label>
+                    <select id="withdrawProvider" onchange="handleProviderChange('withdraw')" required>
+                        <option value="">Select withdrawal method</option>
+                        <option value="mtn">MTN Mobile Money</option>
+                        <option value="airtel">Airtel Money</option>
+                        <option value="mpesa">M-Pesa</option>
+                        <option value="bank">Bank Transfer</option>
+                        <option value="paypal">PayPal</option>
+                    </select>
+                </div>
+
+                <!-- Mobile Money Fields -->
+                <div id="withdrawMobileFields" style="display: none;">
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="withdrawPhone" placeholder="+260977123456">
+                    </div>
+                </div>
+
+                <!-- Bank Fields -->
+                <div id="withdrawBankFields" style="display: none;">
+                    <div class="form-group">
+                        <label>Bank Account Number</label>
+                        <input type="text" id="withdrawBank" placeholder="Account number">
+                    </div>
+                </div>
+
+                <!-- PayPal Fields -->
+                <div id="withdrawPaypalFields" style="display: none;">
+                    <div class="form-group">
+                        <label>PayPal Email</label>
+                        <input type="email" id="withdrawPaypal" placeholder="your@email.com">
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-check"></i> Withdraw Now
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../scripts/wallet.js"></script>
+</body>
+</html>

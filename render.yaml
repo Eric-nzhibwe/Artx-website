@@ -1,0 +1,72 @@
+databases:
+  # PostgreSQL Database (free tier)
+  - name: artx-db
+    databaseName: artx_platform
+    user: artx_user
+    plan: free
+    region: oregon
+
+services:
+  # Django Backend Web Service (serves both API and frontend)
+  - type: web
+    name: artx-backend
+    runtime: python
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: django_backend
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: gunicorn artx_platform.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: false
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: artx-db
+          property: connectionString
+      - key: DB_NAME
+        fromDatabase:
+          name: artx-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: artx-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: artx-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: artx-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: artx-db
+          property: port
+      - key: EMAIL_MODE
+        value: smtp
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_USE_TLS
+        value: true
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Join the ARTX community, share interpretations, and earn rewards!">
+    <title>Community</title>
+    <link rel="icon" type="image/jpeg" href="../images/ARTX.jpg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../styles/community.css">
+    <noscript>
+        <div style="background: #ffdddd; color: #900; padding: 1em; text-align: center;">
+            This site requires JavaScript to function properly. Please enable JavaScript in your browser.
+        </div>
+    </noscript>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo" onclick="window.location.href='../index.html'"><i class="fas fa-fire" aria-hidden="true"></i>ARTX</div>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Open navigation menu">
+                <i class="fas fa-bars" aria-hidden="true"></i>
+            </button>
+            <nav class="nav" id="mainNav">
+                <button class="nav-btn" onclick="window.location.href='../index.html'">Dashboard</button>
+                <button class="nav-btn" onclick="window.location.href='challenges.html'">Challenges</button>
+                <button class="nav-btn active">Community</button>
+                <button class="nav-btn" onclick="window.location.href='influencers.html'">Influencers</button>
+            </nav>
+            <!-- User Menu Dropdown -->
+                <div class="user-menu-dropdown">
+                    <button class="btn-user-menu" onclick="toggleUserMenu()" aria-label="Open user menu">
+                        <i class="fas fa-user-circle" aria-hidden="true"></i>
+                        <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <div class="dropdown-content" id="userDropdown" role="menu" aria-label="User menu">
+                        <a href="wallet.html" role="menuitem">
+                            <i class="fas fa-wallet" aria-hidden="true"></i> My Wallet
+                        </a>
+                        <a href="chatbot.html" role="menuitem">
+                            <i class="fas fa-robot" aria-hidden="true"></i> AI Assistant
+                        </a>
+                        <a href="#" onclick="openMessenger(); return false;" role="menuitem">
+                            <i class="fas fa-comments" aria-hidden="true"></i> Messenger
+                            <span class="unread-badge" id="unreadBadge" style="display: none;">0</span>
+                        </a>
+                        <a href="user.html" role="menuitem">
+                            <i class="fas fa-user" aria-hidden="true"></i> User Profile
+                        </a>
+                        <div class="user-info" aria-label="User info">
+                            <div class="wallet-balance-badge" id="walletBalanceBadge" onclick="window.location.href='wallet.html'" style="cursor: pointer; display: none;">
+                                <i class="fas fa-wallet" aria-hidden="true"></i>
+                                <span id="walletBalance">K0.00</span> <!-- Should be set dynamically -->
+                            </div>
+                            <div class="streak-badge" id="streakBadge">
+                                <span class="streak-icon"><i class="fas fa-fire" aria-hidden="true"></i></span>
+                                <span id="streakCount">0</span> <!-- Should be set dynamically -->
+                            </div>
+                            <span class="prestige-badge" id="userPrestige">0</span> <!-- Should be set dynamically -->
+                            <div class="tier-badge" id="tierBadge">Bronze</div> <!-- Should be set dynamically -->
+                            <span class="username" id="username">Player</span> <!-- Should be set dynamically -->
+                            <a href="#" onclick="logout(); return false;" role="menuitem">
+                                <i class="fas fa-sign-out-alt" aria-hidden="true"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('feed')">
+                <i class="fas fa-fire" aria-hidden="true"></i> Community Feed
+            </button>
+            <button class="tab-btn" onclick="switchTab('top')">
+                <i class="fas fa-trophy" aria-hidden="true"></i> Top Interpretations
+            </button>
+            <button class="tab-btn" onclick="switchTab('rewards')">
+                <i class="fas fa-gift" aria-hidden="true"></i> Rewards Shop
+            </button>
+        </div>
+
+        <!-- Community Feed Tab -->
+        <section id="feed" class="tab-content active">
+            <div class="section-header">
+                <h1><i class="fas fa-comments" aria-hidden="true"></i> Community Interpretations</h1>
+                <div class="filters">
+                    <select id="challengeFilter" onchange="filterFeed()">
+                        <option value="all">All Challenges</option>
+                    </select>
+                    <select id="sortFilter" onchange="filterFeed()">
+                        <option value="recent">Most Recent</option>
+                        <option value="popular">Most Popular</option>
+                        <option value="controversial">Controversial</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="interpretations-grid" id="interpretationsGrid"></div>
+        </section>
+
+        <!-- Top Interpretations Tab -->
+        <section id="top" class="tab-content">
+            <div class="section-header">
+                <h1><i class="fas fa-trophy" aria-hidden="true"></i> Top Rated Interpretations</h1>
+                <div class="filters">
+                    <button class="filter-btn active" onclick="filterTopBy('week')">This Week</button>
+                    <button class="filter-btn" onclick="filterTopBy('month')">This Month</button>
+                    <button class="filter-btn" onclick="filterTopBy('alltime')">All Time</button>
+                </div>
+            </div>
+
+            <div class="top-list" id="topList"></div>
+        </section>
+
+        <!-- Rewards Shop Tab -->
+        <section id="rewards" class="tab-content">
+            <div class="section-header">
+                <h1><i class="fas fa-store" aria-hidden="true"></i> Rewards Shop</h1>
+                <div class="balance-display">
+                    <i class="fas fa-coins" aria-hidden="true"></i> Your Balance: <span id="shopBalance">0</span> coins
+                </div>
+            </div>
+
+            <div class="rewards-grid">
+                <div class="reward-card">
+                    <div class="reward-icon"><i class="fas fa-bolt" aria-hidden="true"></i></div>
+                    <h3>Challenge Boost</h3>
+                    <p>2x points on next challenge</p>
+                    <div class="reward-price"><i class="fas fa-coins"></i> 50</div>
+                    <button class="btn-buy" onclick="buyReward('boost', 50)">Buy Now</button>
+                </div>
+
+                <div class="reward-card">
+                    <div class="reward-icon"><i class="fas fa-clock" aria-hidden="true"></i></div>
+                    <h3>Extra Time</h3>
+                    <p>+10 minutes on next challenge</p>
+                    <div class="reward-price"><i class="fas fa-coins"></i> 30</div>
+                    <button class="btn-buy" onclick="buyReward('time', 30)">Buy Now</button>
+                </div>
+
+                <div class="reward-card">
+                    <div class="reward-icon"><i class="fas fa-star" aria-hidden="true"></i></div>
+                    <h3>Prestige Boost</h3>
+                    <p>+100 instant prestige</p>
+                    <div class="reward-price"><i class="fas fa-coins"></i> 100</div>
+                    <button class="btn-buy" onclick="buyReward('prestige', 100)">Buy Now</button>
+                </div>
+
+                <div class="reward-card">
+                    <div class="reward-icon"><i class="fas fa-crown" aria-hidden="true"></i></div>
+                    <h3>VIP Badge</h3>
+                    <p>7-day VIP status</p>
+                    <div class="reward-price"><i class="fas fa-coins"></i> 200</div>
+                    <button class="btn-buy" onclick="buyReward('vip', 200)">Buy Now</button>
+                </div>
+
+                <div class="reward-card">
+                    <div class="reward-icon"><i class="fas fa-unlock" aria-hidden="true"></i></div>
+                    <h3>Tier Skip</h3>
+                    <p>Unlock next tier early</p>
+                    <div class="reward-price"><i class="fas fa-coins"></i> 500</div>
+                    <button class="btn-buy" onclick="buyReward('tier', 500)">Buy Now</button>
+                </div>
+
+                <div class="reward-card">
+                    <div class="reward-icon"><i class="fas fa-palette" aria-hidden="true"></i></div>
+                    <h3>Custom Theme</h3>
+                    <p>Personalize your profile</p>
+                    <div class="reward-price"><i class="fas fa-coins"></i> 150</div>
+                    <button class="btn-buy" onclick="buyReward('theme', 150)">Buy Now</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Interpretation Detail Modal -->
+    <div id="interpretationModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="interpretationDetail">
+        <div class="modal-content large">
+            <button class="close" onclick="closeInterpretationModal()" aria-label="Close modal">&times;</button>
+            <div id="interpretationDetail" tabindex="0"></div>
+        </div>
+    </div>
+
+    <script src="../scripts/community.js"></script>
+    <!--
+        Note: For any POST actions (e.g., buyReward), ensure CSRF tokens are handled if integrating with Django backend.
+    -->
+</body>
+</html>

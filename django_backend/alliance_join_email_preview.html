@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤝 Welcome to Elite Warriors! Alliance Activated! 🛡️</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .tagline {
+            font-size: 1.1em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .message {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(240, 147, 251, 0.3);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .stat-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 20px 0;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .footer-links {
+            margin: 20px 0;
+        }
+        
+        .footer-links a {
+            color: #ecf0f1;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 0.9em;
+        }
+        
+        .social-links {
+            margin: 20px 0;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #ecf0f1;
+            font-size: 1.2em;
+        }
+        
+        .unsubscribe {
+            font-size: 0.8em;
+            color: #95a5a6;
+            margin-top: 20px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .content {
+                padding: 30px 20px;
+            }
+            
+            .header {
+                padding: 25px 20px;
+            }
+            
+            .logo {
+                font-size: 2em;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo">🎮 ARTX</div>
+            <div class="tagline">Elite Gaming Platform</div>
+        </div>
+        
+        <div class="content">
+            
+<div class="greeting">
+    Alliance Activated! Welcome to the Brotherhood! 🛡️
+</div>
+
+<div class="message">
+    <p>🔥 <strong>Elite Gamer</strong>, you've just joined something LEGENDARY!</p>
+    
+    <p>You're now officially a member of <strong>Elite Warriors</strong> - one of the most elite gaming alliances on ARTX. Together, you're unstoppable!</p>
+</div>
+
+<div class="highlight-box" style="background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);">
+    <h2 style="margin-bottom: 20px; font-size: 2em;">
+        🛡️ Elite Warriors
+    </h2>
+    <div style="font-size: 1.2em; margin: 15px 0;">
+        <strong>"The most elite gaming alliance on ARTX - Victory Through Unity"</strong>
+    </div>
+    <div style="margin-top: 20px;">
+        <span style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; margin: 5px;">
+            👥 0 Elite Members
+        </span>
+        <span style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; margin: 5px;">
+            🏆 Level 15 Alliance
+        </span>
+    </div>
+</div>
+
+<div class="message">
+    <h3 style="color: #667eea; margin-bottom: 15px;">🎯 Your Alliance Benefits</h3>
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #4ecdc4;">⚡</span>
+            <strong>Team Tournaments:</strong> Compete together in exclusive alliance events
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #4ecdc4;">💰</span>
+            <strong>Shared Rewards:</strong> Win together, earn together - bonus payouts for team victories
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #4ecdc4;">🎓</span>
+            <strong>Skill Sharing:</strong> Learn from your alliance members and level up faster
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #4ecdc4;">🛡️</span>
+            <strong>Alliance Protection:</strong> Your alliance has your back in competitive matches
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #4ecdc4;">📊</span>
+            <strong>Strategy Sessions:</strong> Plan and coordinate with your team for maximum domination
+        </li>
+    </ul>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-item">
+        <span class="stat-value">8</span>
+        <div class="stat-label">Alliance Wins</div>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">15000</span>
+        <div class="stat-label">Alliance Prestige</div>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">#15</span>
+        <div class="stat-label">Alliance Level</div>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">50</span>
+        <div class="stat-label">Max Members</div>
+    </div>
+</div>
+
+<div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #4ecdc4;">
+    <h4 style="color: #4ecdc4; margin-bottom: 10px;">👑 Meet Your Alliance Leader</h4>
+    <p style="margin: 5px 0; color: #555;"><strong>Elite Gamer</strong></p>
+    <p style="margin: 5px 0; color: #666; font-size: 0.9em;">Expert • Level 25 • 12 Tournament Wins</p>
+    <p style="margin: 5px 0 0 0; color: #555; font-style: italic;">"The most elite gaming alliance on ARTX - Victory Through Unity"</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="#" class="cta-button">🛡️ Enter Alliance HQ</a>
+</div>
+
+<div class="message">
+    <h3 style="color: #667eea; margin-bottom: 15px;">🚀 What's Next?</h3>
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">💬</span>
+            <strong>Join the Alliance Chat:</strong> Connect with your new teammates
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">📅</span>
+            <strong>Check Upcoming Events:</strong> See what tournaments your alliance is entering
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">🎯</span>
+            <strong>Set Your Role:</strong> Choose your specialty and contribute to team strategy
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">🏆</span>
+            <strong>Start Competing:</strong> Jump into your first alliance tournament
+        </li>
+    </ul>
+</div>
+
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+    <h4 style="margin-bottom: 10px;">🔥 Alliance Power Activated!</h4>
+    <p style="margin: 0;">You're no longer fighting alone. With Elite Warriors by your side, victory is inevitable!</p>
+</div>
+
+<div class="message">
+    <p>🤝 <strong>Welcome to Elite Warriors, Elite Gamer!</strong></p>
+    <p>Your alliance awaits. Time to show the gaming world what true teamwork looks like! 🚀🛡️</p>
+</div>
+
+        </div>
+        
+        <div class="footer">
+            <div class="footer-links">
+                <a href="#">Dashboard</a>
+                <a href="#">Tournaments</a>
+                <a href="#">Alliances</a>
+                <a href="#">Support</a>
+            </div>
+            
+            <div class="social-links">
+                <a href="#">📱</a>
+                <a href="#">🐦</a>
+                <a href="#">📘</a>
+                <a href="#">📷</a>
+            </div>
+            
+            <div class="unsubscribe">
+                <p>© 2024 ARTX Platform. All rights reserved.</p>
+                <p>You're receiving this because you're part of the ARTX community.</p>
+                <a href="#" style="color: #95a5a6;">Unsubscribe</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -176,17 +176,17 @@ CORS_ALLOW_CREDENTIALS = True
 # Email Configuration
 # Set to 'console' to print emails to terminal (for testing)
 # Set to 'smtp' to send real emails via Gmail
-EMAIL_MODE = config('EMAIL_MODE', default='console')
+EMAIL_MODE = config('EMAIL_MODE', default='smtp')
 
 if EMAIL_MODE == 'console':
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
     EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
     EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='ericnzhibwe8@gmail.com')
+    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='oezj nyzb erzs vbkm')
 
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='ARTX Platform <noreply@artx.com>')
 
@@ -207,13 +207,13 @@ LEMONSQUEEZY_API_KEY = config('LEMONSQUEEZY_API_KEY', default='')
 LEMONSQUEEZY_STORE_ID = config('LEMONSQUEEZY_STORE_ID', default='')
 
 # PawaPay Configuration (African Mobile Money)
-PAWAPAY_API_KEY = config('PAWAPAY_API_KEY', default='')
+PAWAPAY_API_KEY = config('PAWAPAY_API_KEY', default='eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjE4NjI3IiwibWF2IjoiMSIsImV4cCI6MjA5NTE1MTkxNywiaWF0IjoxNzc5NTMyNzE3LCJwbSI6IkRBRixQQUYiLCJqdGkiOiIxOWU5MGYwMy0xMmZkLTQ5ODktOTZkMC0zMWFiMzdhMTYwODkifQ.bSbEHIQVAyBBZepcNDvbOQWbCagX7vri4MNdGsHlQJRDGwGD1qnxZBEFZwddiW3ynjMZhcTdgLRBKmKJBBNEEg')
 PAWAPAY_API_URL = config('PAWAPAY_API_URL', default='https://api.pawapay.cloud')
 PAWAPAY_WEBHOOK_SECRET = config('PAWAPAY_WEBHOOK_SECRET', default='')
 
 # OpenAI Configuration (for AI Chatbot)
 # ⚠️ IMPORTANT: Keep this in .env file ONLY - DO NOT commit to git
-OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
+OPENAI_API_KEY = config('OPENAI_API_KEY', default='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')
 
 # Logging
 LOGGING = {

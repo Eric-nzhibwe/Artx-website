@@ -1,0 +1,180 @@
+{% extends "emails/base.html" %}
+
+{% block title %}🎉 TIER UPGRADE! You've Reached {{ new_tier }}! 🚀{% endblock %}
+
+{% block content %}
+<div class="greeting">
+    LEGENDARY ACHIEVEMENT UNLOCKED! 🏆
+</div>
+
+<div class="message">
+    <p>🔥 <strong>{{ user.display_name|default:user.username }}</strong>, you absolute LEGEND!</p>
+    
+    <p>Your skills have been recognized, your dedication has paid off, and your gaming prowess has earned you something incredible...</p>
+</div>
+
+<div class="highlight-box" style="background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%); color: #2c3e50;">
+    <h2 style="margin-bottom: 20px; font-size: 2.2em;">
+        🎊 TIER UPGRADE! 🎊
+    </h2>
+    <div style="font-size: 1.5em; margin: 20px 0;">
+        <span style="text-decoration: line-through; opacity: 0.6;">{{ old_tier }}</span>
+        <span style="margin: 0 20px; font-size: 1.2em;">➜</span>
+        <span style="font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">{{ new_tier }}</span>
+    </div>
+    <p style="font-size: 1.2em; margin-top: 15px;">You've officially joined the elite ranks!</p>
+</div>
+
+<div class="message">
+    <h3 style="color: #667eea; margin-bottom: 15px;">🎯 Your New {{ new_tier }} Powers</h3>
+    
+    {% if new_tier == "Silver" %}
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #c0c0c0;">🥈</span>
+            Access to Silver-tier tournaments with bigger rewards
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #c0c0c0;">⚡</span>
+            Faster prestige point accumulation
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #c0c0c0;">🎁</span>
+            Weekly bonus challenges
+        </li>
+    </ul>
+    {% elif new_tier == "Gold" %}
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">🥇</span>
+            Access to exclusive Gold tournaments
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">👑</span>
+            VIP alliance creation privileges
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">💰</span>
+            Higher payout rates on wins
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">🎯</span>
+            Priority support and beta features
+        </li>
+    </ul>
+    {% elif new_tier == "Platinum" %}
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #e5e4e2;">💎</span>
+            Platinum-exclusive mega tournaments
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #e5e4e2;">🚀</span>
+            Advanced analytics and performance insights
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #e5e4e2;">🎪</span>
+            Custom profile themes and badges
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #e5e4e2;">🤝</span>
+            Direct access to pro player networks
+        </li>
+    </ul>
+    {% elif new_tier == "Diamond" %}
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #b9f2ff;">💎</span>
+            Diamond-tier championship access
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #b9f2ff;">🎖️</span>
+            Exclusive Diamond badge and recognition
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #b9f2ff;">🏰</span>
+            Premium alliance management tools
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #b9f2ff;">💸</span>
+            Maximum earning potential unlocked
+        </li>
+    </ul>
+    {% elif new_tier == "Elite" %}
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ff6b6b;">👑</span>
+            Elite championship invitations
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ff6b6b;">🌟</span>
+            Featured player spotlight opportunities
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ff6b6b;">🎯</span>
+            Influence platform development decisions
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ff6b6b;">💫</span>
+            Legendary status and hall of fame entry
+        </li>
+    </ul>
+    {% elif new_tier == "Legendary" %}
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #9b59b6;">🏆</span>
+            LEGENDARY status - the ultimate achievement
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #9b59b6;">👑</span>
+            Exclusive Legendary tournaments
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #9b59b6;">🌟</span>
+            Personal gaming consultant
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #9b59b6;">💎</span>
+            Unlimited earning potential
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #9b59b6;">🎪</span>
+            Co-create tournaments and challenges
+        </li>
+    </ul>
+    {% endif %}
+</div>
+
+<div class="stats-grid">
+    <div class="stat-item">
+        <span class="stat-value">{{ user.level }}</span>
+        <div class="stat-label">Current Level</div>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">{{ user.prestige_points }}</span>
+        <div class="stat-label">Prestige Points</div>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">{{ user.tournament_wins }}</span>
+        <div class="stat-label">Tournament Wins</div>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">{{ user.success_rate }}%</span>
+        <div class="stat-label">Success Rate</div>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="#" class="cta-button">🎮 Explore {{ new_tier }} Features</a>
+</div>
+
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+    <h4 style="margin-bottom: 10px;">🔥 Keep the Momentum Going!</h4>
+    <p style="margin: 0;">You're on fire! Keep pushing your limits and who knows? The next tier might be just around the corner...</p>
+</div>
+
+<div class="message">
+    <p>🎊 <strong>Congratulations again on reaching {{ new_tier }} tier!</strong> You've earned every bit of this achievement.</p>
+    <p>Now go show the gaming world what a true {{ new_tier }} player can do! 🚀</p>
+</div>
+{% endblock %}

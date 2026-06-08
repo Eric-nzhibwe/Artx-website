@@ -1,0 +1,88 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Welcome Back, Champion! 🎮{% endblock %}
+
+{% block content %}
+<div class="greeting">
+    Welcome back, {{ user.display_name|default:user.username }}! 🔥
+</div>
+
+<div class="message">
+    <p>🎯 <strong>The arena awaits!</strong> You've successfully logged into ARTX Platform and your gaming empire is ready for action.</p>
+    
+    <p>While you were away, the competition has been heating up. Time to show them what a true champion looks like!</p>
+</div>
+
+<div class="highlight-box">
+    <h3 style="margin-bottom: 15px;">📊 Your Current Status</h3>
+    <div class="stats-grid">
+        <div class="stat-item">
+            <span class="stat-value">{{ user.level }}</span>
+            <div class="stat-label">Current Level</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">{{ user.access_tier }}</span>
+            <div class="stat-label">Access Tier</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">{{ user.prestige_points }}</span>
+            <div class="stat-label">Prestige Points</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">{{ user.power_rank }}</span>
+            <div class="stat-label">Power Rank</div>
+        </div>
+    </div>
+</div>
+
+<div class="message">
+    <h3 style="color: #667eea; margin-bottom: 15px;">🚀 What's Happening Now?</h3>
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">🏆</span>
+            <strong>Active tournaments</strong> - {{ active_tournaments_count|default:"Several" }} tournaments are live and accepting entries
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">📬</span>
+            <strong>New notifications</strong> - {{ unread_notifications_count|default:"Check" }} updates waiting in your inbox
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">🤝</span>
+            <strong>Alliance activity</strong> - Your team has been making moves while you were away
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">⚡</span>
+            <strong>Daily challenges</strong> - Fresh challenges available for bonus prestige points
+        </li>
+    </ul>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="#" class="cta-button">🎮 Jump Into Action</a>
+</div>
+
+<div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #ff6b6b;">
+    <h4 style="color: #ff6b6b; margin-bottom: 10px;">🔥 Hot Tip</h4>
+    <p style="margin: 0; color: #555;">Login streaks boost your prestige multiplier! Keep that momentum going and watch your power rank soar. Every day counts in the arena!</p>
+</div>
+
+<div class="message">
+    <p><strong>Login Details:</strong></p>
+    <ul style="color: #666; font-size: 0.95em; margin-left: 20px;">
+        <li>Time: {{ login_time|date:"F j, Y g:i A" }}</li>
+        <li>Device: {{ device_info|default:"Unknown device" }}</li>
+        <li>Location: {{ location_info|default:"Secure connection" }}</li>
+    </ul>
+</div>
+
+<div style="background: #e8f5e8; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745; margin: 20px 0;">
+    <p style="margin: 0; color: #155724; font-size: 0.9em;">
+        <strong>🔒 Security Notice:</strong> If this login wasn't you, please secure your account immediately and contact our support team.
+    </p>
+</div>
+
+<div class="message">
+    <p>The competition never sleeps, and neither should your ambition. Time to reclaim your throne!</p>
+    <p><strong>Game on, Champion! 🎮⚡</strong></p>
+</div>
+{% endblock %}

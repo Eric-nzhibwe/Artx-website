@@ -1,0 +1,43 @@
+INFO 2026-05-30 23:36:29,289 autoreload 17284 13652 Watching for file changes with StatReloader
+INFO 2026-05-30 23:37:59,999 autoreload 16732 16736 Watching for file changes with StatReloader
+INFO 2026-05-30 23:41:02,489 frontend_views 16732 9552 Served: index.html (99319 bytes, text/html)
+INFO 2026-05-30 23:41:08,441 frontend_views 16732 15664 Served: styles/icon-nav.css (8043 bytes, text/css)
+INFO 2026-05-30 23:41:08,454 frontend_views 16732 9552 Served: styles/styles.css (41878 bytes, text/css)
+INFO 2026-05-30 23:41:08,478 frontend_views 16732 13984 Served: styles/social-feed.css (21608 bytes, text/css)
+INFO 2026-05-30 23:41:11,335 frontend_views 16732 9552 Served: styles/settings.css (14657 bytes, text/css)
+INFO 2026-05-30 23:41:11,479 frontend_views 16732 13984 Served: styles/challenges-enhanced.css (11031 bytes, text/css)
+INFO 2026-05-30 23:41:11,487 frontend_views 16732 15664 Served: styles/marketplace.css (7940 bytes, text/css)
+INFO 2026-05-30 23:41:11,508 frontend_views 16732 12016 Served: styles/streak.css (6398 bytes, text/css)
+INFO 2026-05-30 23:41:11,760 frontend_views 16732 15664 Served: scripts/challenges-enhanced.js (28077 bytes, text/javascript)
+INFO 2026-05-30 23:41:19,536 frontend_views 16732 9552 Served: scripts/marketplace.js (12501 bytes, text/javascript)
+INFO 2026-05-30 23:41:19,565 frontend_views 16732 12016 Served: scripts/settings.js (19394 bytes, text/javascript)
+INFO 2026-05-30 23:41:19,566 frontend_views 16732 6092 Served: scripts/social-feed.js (22836 bytes, text/javascript)
+INFO 2026-05-30 23:41:19,614 frontend_views 16732 16032 Served: scripts/app.js (58267 bytes, text/javascript)
+INFO 2026-05-30 23:41:29,154 frontend_views 16732 16032 Served: pages/auth.html (7335 bytes, text/html)
+INFO 2026-05-30 23:41:29,891 frontend_views 16732 6092 Served: images/ARTX.jpg (23200 bytes, image/jpeg)
+INFO 2026-05-30 23:41:30,424 frontend_views 16732 16032 Served: styles/auth.css (14437 bytes, text/css)
+INFO 2026-05-30 23:41:30,720 frontend_views 16732 12016 Served: scripts/auth.js (16379 bytes, text/javascript)
+INFO 2026-05-30 23:41:38,569 frontend_views 16732 12016 Served: images/ARTX.jpg (23200 bytes, image/jpeg)
+WARNING 2026-05-30 23:42:03,753 log 16732 16556 Bad Request: /api/auth/login/
+INFO 2026-05-30 23:46:12,129 frontend_views 16732 10120 Served: index.html (99319 bytes, text/html)
+WARNING 2026-05-30 23:46:21,919 log 16732 11572 Not Found: /api/tournaments/leaderboard/
+WARNING 2026-05-30 23:46:42,171 log 16732 10120 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2026-05-30 23:58:22,696 frontend_views 16732 12872 Served: index.html (99319 bytes, text/html)
+WARNING 2026-05-30 23:58:27,406 log 16732 12872 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-05-30 23:58:53,905 log 16732 16132 Not Found: /api/tournaments/leaderboard/
+INFO 2026-05-30 23:58:58,013 frontend_views 16732 12872 Served: index.html (99319 bytes, text/html)
+INFO 2026-05-30 23:58:58,417 frontend_views 16732 12872 Served: styles/styles.css (41878 bytes, text/css)
+INFO 2026-05-30 23:58:58,418 frontend_views 16732 2564 Served: styles/social-feed.css (22058 bytes, text/css)
+INFO 2026-05-30 23:58:58,867 frontend_views 16732 14064 Served: styles/icon-nav.css (8292 bytes, text/css)
+INFO 2026-05-30 23:58:58,873 frontend_views 16732 12872 Served: styles/streak.css (6398 bytes, text/css)
+INFO 2026-05-30 23:58:58,937 frontend_views 16732 17008 Served: styles/marketplace.css (7940 bytes, text/css)
+INFO 2026-05-30 23:58:58,937 frontend_views 16732 10412 Served: styles/challenges-enhanced.css (11031 bytes, text/css)
+INFO 2026-05-30 23:58:59,072 frontend_views 16732 14016 Served: styles/settings.css (14657 bytes, text/css)
+INFO 2026-05-30 23:58:59,554 frontend_views 16732 2564 Served: scripts/app.js (58267 bytes, text/javascript)
+INFO 2026-05-30 23:58:59,581 frontend_views 16732 14016 Served: scripts/social-feed.js (22836 bytes, text/javascript)
+INFO 2026-05-30 23:58:59,699 frontend_views 16732 12872 Served: scripts/settings.js (19394 bytes, text/javascript)
+INFO 2026-05-30 23:58:59,700 frontend_views 16732 10412 Served: scripts/marketplace.js (12501 bytes, text/javascript)
+INFO 2026-05-30 23:58:59,703 frontend_views 16732 17008 Served: scripts/challenges-enhanced.js (28077 bytes, text/javascript)
+WARNING 2026-05-30 23:58:59,754 log 16732 14064 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2026-05-30 23:59:01,750 log 16732 16132 Not Found: /api/tournaments/leaderboard/
+INFO 2026-05-30 23:59:02,149 frontend_views 16732 17008 Served: images/ARTX.jpg (23200 bytes, image/jpeg)

@@ -1,0 +1,1 @@
+# ARTX Platform Django Application

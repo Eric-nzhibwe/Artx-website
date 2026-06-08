@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👑 Alliance Created! You're Now a Leader! 🛡️</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .tagline {
+            font-size: 1.1em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .message {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(240, 147, 251, 0.3);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .stat-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 20px 0;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .footer-links {
+            margin: 20px 0;
+        }
+        
+        .footer-links a {
+            color: #ecf0f1;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 0.9em;
+        }
+        
+        .social-links {
+            margin: 20px 0;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #ecf0f1;
+            font-size: 1.2em;
+        }
+        
+        .unsubscribe {
+            font-size: 0.8em;
+            color: #95a5a6;
+            margin-top: 20px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .content {
+                padding: 30px 20px;
+            }
+            
+            .header {
+                padding: 25px 20px;
+            }
+            
+            .logo {
+                font-size: 2em;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo">🎮 ARTX</div>
+            <div class="tagline">Elite Gaming Platform</div>
+        </div>
+        
+        <div class="content">
+            
+<div class="greeting">
+    LEADERSHIP ACTIVATED! Your Alliance is Born! 👑
+</div>
+
+<div class="message">
+    <p>🔥 <strong>Elite Gamer</strong>, you absolute LEGEND!</p>
+    
+    <p>You've just done something incredible - you've created your own alliance! You're no longer just a player, you're a <strong>LEADER</strong>, a commander, a force that will shape the future of competitive gaming on ARTX!</p>
+</div>
+
+<div class="highlight-box" style="background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #2c3e50;">
+    <h2 style="margin-bottom: 20px; font-size: 2.2em;">
+        👑 ALLIANCE FOUNDED! 👑
+    </h2>
+    <div style="font-size: 1.8em; margin: 20px 0; font-weight: bold;">
+        🛡️ Elite Warriors
+    </div>
+    <div style="font-size: 1.2em; margin: 15px 0; font-style: italic;">
+        "The most elite gaming alliance on ARTX - Victory Through Unity"
+    </div>
+    <p style="font-size: 1.1em; margin-top: 15px;">You are the Founder & Supreme Leader!</p>
+</div>
+
+<div class="message">
+    <h3 style="color: #667eea; margin-bottom: 15px;">👑 Your Leadership Powers</h3>
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">👥</span>
+            <strong>Recruit Elite Members:</strong> Handpick the best players to join your alliance
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">🎯</span>
+            <strong>Set Alliance Strategy:</strong> Define your team's approach to domination
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">🏆</span>
+            <strong>Enter Team Tournaments:</strong> Lead your alliance into epic battles
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">💰</span>
+            <strong>Manage Alliance Treasury:</strong> Distribute rewards and manage resources
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">🎖️</span>
+            <strong>Promote Members:</strong> Recognize excellence and build your command structure
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #ffd700;">🚀</span>
+            <strong>Alliance Upgrades:</strong> Unlock new features and capabilities for your team
+        </li>
+    </ul>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-item">
+        <span class="stat-value">1</span>
+        <div class="stat-label">Current Members</div>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">50</span>
+        <div class="stat-label">Max Capacity</div>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">Level 1</span>
+        <div class="stat-label">Alliance Level</div>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">0</span>
+        <div class="stat-label">Victories</div>
+    </div>
+</div>
+
+<div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #ffd700;">
+    <h4 style="color: #ffd700; margin-bottom: 10px;">🎯 Your Alliance Vision</h4>
+    <p style="margin: 5px 0; color: #555;"><strong>Alliance Name:</strong> Elite Warriors</p>
+    <p style="margin: 5px 0; color: #555;"><strong>Alliance Tag:</strong> [ELITE]</p>
+    <p style="margin: 5px 0; color: #555;"><strong>Description:</strong> The most elite gaming alliance on ARTX - Victory Through Unity</p>
+    <p style="margin: 10px 0 0 0; color: #555; font-style: italic;">"The most elite gaming alliance on ARTX - Victory Through Unity"</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="#" class="cta-button">👑 Manage Your Alliance</a>
+</div>
+
+<div class="message">
+    <h3 style="color: #667eea; margin-bottom: 15px;">🚀 Building Your Empire - Next Steps</h3>
+    <ul style="list-style: none; padding: 0;">
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">🎨</span>
+            <strong>Customize Your Alliance:</strong> Set your logo, colors, and alliance identity
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">📢</span>
+            <strong>Send Invitations:</strong> Recruit your first elite members
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">📋</span>
+            <strong>Set Alliance Rules:</strong> Establish guidelines and expectations
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">🏆</span>
+            <strong>Plan Your First Tournament:</strong> Choose your alliance's debut competition
+        </li>
+        <li style="margin: 10px 0; padding-left: 25px; position: relative;">
+            <span style="position: absolute; left: 0; color: #667eea;">💬</span>
+            <strong>Create Alliance Chat:</strong> Set up communication channels for your team
+        </li>
+    </ul>
+</div>
+
+<div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+    <h4 style="margin-bottom: 10px;">⚡ Leadership Challenge</h4>
+    <p style="margin: 0;">Great leaders aren't born, they're forged in the fires of competition. Your alliance is your legacy - make it legendary!</p>
+</div>
+
+<div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #28a745; margin: 20px 0;">
+    <h4 style="color: #28a745; margin-bottom: 10px;">💡 Leadership Pro Tips</h4>
+    <ul style="margin: 10px 0; padding-left: 20px; color: #555;">
+        <li>Recruit players who complement your skills, not just mirror them</li>
+        <li>Set clear goals and celebrate every victory, no matter how small</li>
+        <li>Lead by example - be the player others aspire to become</li>
+        <li>Communication is key - keep your alliance informed and motivated</li>
+        <li>Remember: A strong alliance makes every member stronger</li>
+    </ul>
+</div>
+
+<div class="message">
+    <p>👑 <strong>Congratulations, Alliance Leader Elite Gamer!</strong></p>
+    <p>Your journey from player to leader begins now. Build your empire, forge unbreakable bonds, and show the gaming world what true leadership looks like!</p>
+    <p><strong>The future of Elite Warriors is in your hands. Make it LEGENDARY! 🚀🛡️</strong></p>
+</div>
+
+        </div>
+        
+        <div class="footer">
+            <div class="footer-links">
+                <a href="#">Dashboard</a>
+                <a href="#">Tournaments</a>
+                <a href="#">Alliances</a>
+                <a href="#">Support</a>
+            </div>
+            
+            <div class="social-links">
+                <a href="#">📱</a>
+                <a href="#">🐦</a>
+                <a href="#">📘</a>
+                <a href="#">📷</a>
+            </div>
+            
+            <div class="unsubscribe">
+                <p>© 2024 ARTX Platform. All rights reserved.</p>
+                <p>You're receiving this because you're part of the ARTX community.</p>
+                <a href="#" style="color: #95a5a6;">Unsubscribe</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

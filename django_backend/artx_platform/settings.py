@@ -295,7 +295,7 @@ OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
 
 # Google Gemini (free tier — recommended)
 # Get key at https://aistudio.google.com/app/apikey
-GEMINI_API_KEY = config('GEMINI_API_KEY', default='AQ.Ab8RN6IvxSL2-YtMGwMkKN5w9uqb6ZY5pxnXE_YaZ1p5ppUdeQ')
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
 
 # Groq / LLaMA 3 (free tier — very fast)
 # Get key at https://console.groq.com/keys

@@ -1,8 +1,12 @@
 """
 Serializers for Challenge models
 """
+import json
+import os
 from rest_framework import serializers
-from .models import Challenge, ChallengeSubmission, ChallengeLeaderboard, ChallengeActivity
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from .models import Challenge, ChallengeSubmission, ChallengeLeaderboard, ChallengeActivity, ImageInterpretationSubmission
 from users.serializers import UserProfileSerializer
 
 
@@ -14,17 +18,25 @@ class ChallengeSerializer(serializers.ModelSerializer):
     has_started = serializers.SerializerMethodField()
     has_ended = serializers.SerializerMethodField()
     user_has_submitted = serializers.SerializerMethodField()
+    user_has_img_submitted = serializers.SerializerMethodField()
+    created_by_username = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
+
+    # Minimum deposit required to unlock image interpretation challenges (ZMW)
+    _MIN_DEPOSIT = 10
     
     class Meta:
         model = Challenge
         fields = [
             'id', 'title', 'description', 'image_url', 'difficulty',
+            'challenge_type', 'hidden_points', 'prize_amount', 'entry_fee',
             'time_limit', 'min_word_count', 'max_word_count',
             'submission_rules', 'creativity_weight', 'relevance_weight',
             'detail_weight', 'min_points', 'max_points', 'status',
             'starts_at', 'ends_at', 'is_featured', 'view_count',
             'submission_count', 'is_active', 'time_remaining',
             'has_started', 'has_ended', 'user_has_submitted',
+            'user_has_img_submitted', 'created_by_username',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'view_count', 'submission_count']
@@ -46,6 +58,294 @@ class ChallengeSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.submissions.filter(user=request.user).exists()
         return False
+
+    def get_user_has_img_submitted(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.image_submissions.filter(user=request.user).exists()
+        return False
+
+    def get_created_by_username(self, obj):
+        return obj.created_by.username if obj.created_by else None
+
+    def get_image_url(self, obj):
+        """
+        For image_interpretation challenges the full image URL is only returned
+        when the requesting user has at least K10 in their wallet (the minimum
+        deposit required to play).  Everyone else gets None so the frontend can
+        only show a blur placeholder — the actual image never reaches the client
+        until the requirement is satisfied.
+
+        Text interpretation challenges are unaffected.
+        """
+        if obj.challenge_type != 'image_interpretation':
+            return obj.image_url
+
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+
+        try:
+            balance = request.user.wallet.available_balance
+            if balance >= self._MIN_DEPOSIT:
+                return obj.image_url
+        except Exception:
+            pass
+
+        return None
+
+
+class ChallengeCreateSerializer(serializers.ModelSerializer):
+    """
+    Accepts multipart/form-data for challenge creation.
+    Saves the uploaded image to media storage and stores the resulting URL.
+    submission_rules is sent as a JSON-encoded string from the frontend form.
+    Challenges are always created as 'draft'; the creator publishes separately.
+    """
+    image = serializers.ImageField(write_only=True, required=True)
+    submission_rules = serializers.CharField(required=True)
+
+    class Meta:
+        model = Challenge
+        fields = [
+            'title', 'description', 'image', 'difficulty', 'time_limit',
+            'min_word_count', 'max_word_count', 'submission_rules',
+            'creativity_weight', 'relevance_weight', 'detail_weight',
+            'min_points', 'max_points', 'prize_amount', 'starts_at', 'ends_at',
+        ]
+        # 'status' is intentionally excluded — creators cannot set it on creation.
+        # Use the /publish/ and /unpublish/ actions instead.
+
+    def validate_submission_rules(self, value):
+        try:
+            rules = json.loads(value)
+            if not isinstance(rules, list):
+                raise serializers.ValidationError("submission_rules must be a JSON array.")
+            return rules
+        except (json.JSONDecodeError, TypeError):
+            raise serializers.ValidationError("submission_rules must be a valid JSON array string.")
+
+    def validate(self, data):
+        if data.get('creativity_weight', 0) + data.get('relevance_weight', 0) + data.get('detail_weight', 0) != 100:
+            raise serializers.ValidationError("Scoring weights must sum to 100.")
+        if data.get('min_word_count', 0) >= data.get('max_word_count', 1):
+            raise serializers.ValidationError("max_word_count must be greater than min_word_count.")
+        if data.get('min_points', 0) >= data.get('max_points', 1):
+            raise serializers.ValidationError("max_points must be greater than min_points.")
+        return data
+
+    def create(self, validated_data):
+        image_file = validated_data.pop('image')
+        request = self.context.get('request')
+        ext = os.path.splitext(image_file.name)[1].lower()
+        safe_name = f"challenges/{validated_data['title'][:40].replace(' ', '_')}{ext}"
+        path = default_storage.save(safe_name, ContentFile(image_file.read()))
+        image_url = request.build_absolute_uri(default_storage.url(path)) if request else default_storage.url(path)
+        return Challenge.objects.create(
+            image_url=image_url,
+            status='draft',   # always draft on creation
+            created_by=request.user if request and request.user.is_authenticated else None,
+            **validated_data
+        )
+
+
+class ImageInterpretationSubmissionSerializer(serializers.ModelSerializer):
+    """Read serializer — returned after scoring"""
+    user = UserProfileSerializer(read_only=True)
+    challenge_title = serializers.CharField(source='challenge.title', read_only=True)
+    point_results   = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = ImageInterpretationSubmission
+        fields = [
+            'id', 'challenge', 'challenge_title', 'user',
+            'discovered_points', 'overall_message',
+            'submission_time_seconds', 'status',
+            'observation_score', 'interpretation_score', 'final_score',
+            'points_earned', 'prize_awarded',
+            'ai_feedback', 'submitted_at', 'scored_at',
+            'point_results',
+        ]
+        read_only_fields = [
+            'id', 'status', 'observation_score', 'interpretation_score',
+            'final_score', 'points_earned', 'prize_awarded',
+            'ai_feedback', 'submitted_at', 'scored_at',
+        ]
+
+    def get_point_results(self, obj):
+        """Parse point results from ai_feedback metadata if stored there."""
+        import json
+        try:
+            meta = json.loads(obj.ai_feedback) if obj.ai_feedback.startswith('{') else {}
+            return meta.get('point_results', [])
+        except Exception:
+            return []
+
+
+class ImageInterpretationSubmissionCreateSerializer(serializers.ModelSerializer):
+    """Write serializer — used when participant submits"""
+
+    class Meta:
+        model  = ImageInterpretationSubmission
+        fields = ['challenge', 'discovered_points', 'overall_message', 'submission_time_seconds']
+
+    def validate_discovered_points(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError('discovered_points must be a list.')
+        if len(value) == 0:
+            raise serializers.ValidationError('You must identify at least one point.')
+        for item in value:
+            if not isinstance(item, dict):
+                raise serializers.ValidationError('Each point must be an object with "label" and "interpretation".')
+            if not item.get('label', '').strip():
+                raise serializers.ValidationError('Each point must have a non-empty "label".')
+            if not item.get('interpretation', '').strip():
+                raise serializers.ValidationError('Each point must have a non-empty "interpretation".')
+        return value
+
+    def validate(self, data):
+        challenge = data['challenge']
+
+        # Must be an image interpretation challenge
+        if challenge.challenge_type != 'image_interpretation':
+            raise serializers.ValidationError(
+                'This endpoint is only for image_interpretation challenges.'
+            )
+
+        # Must be active
+        if not challenge.is_active:
+            raise serializers.ValidationError('This challenge is not currently active.')
+
+        # One submission per user
+        user = self.context['request'].user
+        if challenge.image_submissions.filter(user=user).exists():
+            raise serializers.ValidationError('You have already submitted to this challenge.')
+
+        # ── K10 minimum deposit requirement ───────────────────────────────────
+        # Image interpretation challenges require the player to have deposited
+        # at least K10 into their wallet before they can participate.
+        # This is enforced server-side regardless of entry_fee value.
+        MIN_DEPOSIT_REQUIRED = 10  # ZMW
+        try:
+            wallet = user.wallet
+            if wallet.available_balance < MIN_DEPOSIT_REQUIRED:
+                raise serializers.ValidationError(
+                    f'You need a minimum wallet balance of K{MIN_DEPOSIT_REQUIRED} '
+                    f'to participate in image interpretation challenges. '
+                    f'Please top up your wallet and try again.'
+                )
+        except user.__class__.wallet.RelatedObjectDoesNotExist:
+            raise serializers.ValidationError(
+                f'You need a minimum wallet balance of K{MIN_DEPOSIT_REQUIRED} '
+                f'to participate in image interpretation challenges. '
+                f'Please top up your wallet and try again.'
+            )
+
+        # ── Entry fee deduction (if challenge has a fee on top of K10 minimum) ─
+        entry_fee = challenge.entry_fee
+        if entry_fee > 0:
+            try:
+                wallet = user.wallet
+                if wallet.available_balance < entry_fee:
+                    raise serializers.ValidationError(
+                        f'Insufficient balance. This challenge requires an entry fee of K{entry_fee}. '
+                        f'Your current balance is K{wallet.available_balance}.'
+                    )
+            except user.__class__.wallet.RelatedObjectDoesNotExist:
+                raise serializers.ValidationError(
+                    f'You need a wallet with at least K{entry_fee} to enter this challenge.'
+                )
+
+        return data
+
+    def create(self, validated_data):
+        from django.utils import timezone
+        from .scoring_service import score_image_interpretation
+        import decimal
+
+        user       = self.context['request'].user
+        challenge  = validated_data['challenge']
+        discovered = validated_data['discovered_points']
+        overall    = validated_data.get('overall_message', '')
+
+        # ── Deduct entry fee atomically before creating submission ────────────
+        entry_fee = challenge.entry_fee
+        if entry_fee > 0:
+            try:
+                user.wallet.deduct_funds(
+                    entry_fee,
+                    transaction_type='entry_fee',
+                    description=f'Entry fee — {challenge.title}',
+                    metadata={'challenge_id': str(challenge.id)},
+                )
+            except ValueError:
+                raise serializers.ValidationError(
+                    f'Insufficient balance to pay entry fee of K{entry_fee}.'
+                )
+
+        # Create submission first
+        submission = ImageInterpretationSubmission.objects.create(
+            user=user,
+            status='scoring',
+            **validated_data,
+        )
+
+        # Score immediately (synchronous — switch to Celery task for production scale)
+        try:
+            result = score_image_interpretation(
+                hidden_points=challenge.hidden_points,
+                discovered_points=discovered,
+                overall_message=overall,
+            )
+
+            import json
+            submission.observation_score    = result['observation_score']
+            submission.interpretation_score = result['interpretation_score']
+            submission._matched_count       = result['matched_count']
+
+            # Store full result JSON in ai_feedback for point_results retrieval
+            submission.ai_feedback = json.dumps({
+                'summary':      result['ai_feedback'],
+                'point_results': result.get('point_results', []),
+            })
+
+            submission.calculate_final_score()
+
+            # Map final_score to prestige points
+            submission.points_earned = submission.final_score
+            submission.status        = 'scored'
+            submission.scored_at     = timezone.now()
+            submission.save()
+
+            # Award prestige
+            user.add_prestige(
+                submission.points_earned,
+                f'Image Interpretation — {challenge.title}',
+            )
+
+            # Record activity
+            from .models import ChallengeActivity
+            ChallengeActivity.objects.create(
+                challenge=challenge,
+                user=user,
+                activity_type='submission',
+                description=f"{user.username} submitted to {challenge.title} "
+                            f"({result['matched_count']}/{result['total_points']} points found)",
+                metadata={
+                    'submission_id':      str(submission.id),
+                    'observation_score':  result['observation_score'],
+                    'matched_count':      result['matched_count'],
+                },
+            )
+
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).error(f'Scoring failed: {exc}')
+            submission.status     = 'submitted'
+            submission.ai_feedback = 'Scoring is pending — check back shortly.'
+            submission.save(update_fields=['status', 'ai_feedback'])
+
+        return submission
 
 
 class ChallengeSubmissionSerializer(serializers.ModelSerializer):
@@ -114,25 +414,68 @@ class ChallengeSubmissionCreateSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        """Create submission and record activity"""
+        """Create submission, score it with AI, and record activity."""
+        import logging
+        from django.utils import timezone
+        from .text_scoring_service import score_text_interpretation
+
+        log  = logging.getLogger(__name__)
         user = self.context['request'].user
+
         submission = ChallengeSubmission.objects.create(
             user=user,
-            **validated_data
+            status='submitted',
+            **validated_data,
         )
-        
-        # Create activity record
+
+        challenge = submission.challenge
+
+        # ── AI scoring (synchronous; switch to Celery for high traffic) ──────
+        try:
+            result = score_text_interpretation(
+                challenge_title=challenge.title,
+                challenge_description=challenge.description,
+                difficulty=challenge.difficulty,
+                submission_rules=challenge.submission_rules or [],
+                creativity_weight=challenge.creativity_weight,
+                relevance_weight=challenge.relevance_weight,
+                detail_weight=challenge.detail_weight,
+                min_points=challenge.min_points,
+                max_points=challenge.max_points,
+                interpretation=submission.interpretation,
+                word_count=submission.word_count,
+            )
+
+            submission.creativity_score = result['creativity_score']
+            submission.relevance_score  = result['relevance_score']
+            submission.detail_score     = result['detail_score']
+            submission.final_score      = result['final_score']
+            submission.status           = 'scored'
+            submission.scored_at        = timezone.now()
+            submission.save()
+
+            # Award prestige points
+            user.add_prestige(
+                submission.final_score,
+                f"{challenge.difficulty} challenge: {challenge.title}",
+            )
+
+        except Exception as exc:
+            log.error(f"Text scoring failed for submission {submission.id}: {exc}")
+            # Leave status as 'submitted' — admin can re-score manually
+
+        # ── Activity record ───────────────────────────────────────────────────
         ChallengeActivity.objects.create(
-            challenge=submission.challenge,
+            challenge=challenge,
             user=user,
             activity_type='submission',
-            description=f"{user.username} submitted to {submission.challenge.title}",
+            description=f"{user.username} submitted to {challenge.title}",
             metadata={
                 'submission_id': str(submission.id),
-                'word_count': submission.word_count
-            }
+                'word_count':    submission.word_count,
+            },
         )
-        
+
         return submission
 
 

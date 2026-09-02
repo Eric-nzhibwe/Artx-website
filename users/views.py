@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 User views for ARTX Platform API
 """
@@ -42,20 +43,11 @@ class UserRegistrationView(generics.CreateAPIView):
                 'message': str(serializer.errors)
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        user = serializer.save()
-        
+        user = serializer.save()  # welcome email is sent inside serializer.create()
+
         # Create token for immediate login
         token, created = Token.objects.get_or_create(user=user)
-        
-        # Send welcome email
-        try:
-            from notifications.tasks import send_welcome_email
-            send_welcome_email(user.id)
-            print(f"✅ Welcome email sent to {user.email}")
-        except Exception as e:
-            print(f"⚠️ Could not send welcome email: {e}")
-            # Don't fail registration if email fails
-        
+
         return Response({
             'user': UserProfileSerializer(user).data,
             'token': token.key,
@@ -115,6 +107,23 @@ def login_view(request):
 
     # Establish Django session too (for browser clients)
     login(request, user, backend='users.backends.EmailOrUsernameBackend')
+
+    # Send login notification email (non-blocking)
+    try:
+        from users.email_service import email_service
+        ip      = (request.META.get('HTTP_X_FORWARDED_FOR') or
+                   request.META.get('REMOTE_ADDR', 'Unknown')).split(',')[0].strip()
+        device  = request.META.get('HTTP_USER_AGENT', 'Unknown browser')[:120]
+        email_service.send_login_notification(user, ip_address=ip, device=device)
+    except Exception:
+        pass  # Never block login if email fails
+
+    # Send login alert SMS (non-blocking, only if user has a phone number)
+    try:
+        from users.sms_service import sms_service
+        sms_service.send_login_alert(user)
+    except Exception:
+        pass  # Never block login if SMS fails
 
     return Response({
         'token': token.key,
@@ -402,8 +411,9 @@ def resend_otp_view(request):
     # Generate new OTP
     otp, new_session_id = otp_service.create_otp(user, session_id)
     
-    # Send OTP
+    # Send OTP via email and SMS
     otp_service.send_otp_email(user, otp)
+    otp_service.send_otp_sms(user, otp)
     
     # Mark as resent
     otp_service.mark_resent(session_id)
@@ -564,3 +574,155 @@ def delete_account_view(request):
 
     request.user.delete()
     return Response({'message': 'Account permanently deleted.'})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def spend_prestige_view(request):
+    """Deduct prestige points for a reward purchase."""
+    amount = request.data.get('amount')
+    reason = request.data.get('reason', 'Reward redemption')
+
+    try:
+        amount = int(amount)
+        if amount <= 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        return Response({'error': 'Invalid amount.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    success = request.user.spend_prestige(amount, reason)
+    if not success:
+        return Response(
+            {'error': f'Insufficient prestige. You have {request.user.prestige_points} pts.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return Response({
+        'message': f'Successfully redeemed "{reason}".',
+        'prestige_points': request.user.prestige_points,
+    })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Password Reset
+# ─────────────────────────────────────────────────────────────────────────────
+
+@csrf_exempt
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([permissions.AllowAny])
+def password_reset_request_view(request):
+    """
+    Step 1 -- User submits their email.
+    Generates a secure token, stores it in cache, and emails a reset link.
+    Always returns 200 so we never reveal whether an email is registered.
+    """
+    import secrets
+    from django.core.cache import cache
+    from django.conf import settings
+
+    email = (request.data.get('email') or '').strip().lower()
+    if not email:
+        return Response(
+            {'error': 'Please enter your email address.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Always respond with success -- don't reveal account existence
+    generic_ok = Response({
+        'message': (
+            "If that email is registered, you'll receive a reset link shortly. "
+            "Check your spam folder if it doesn't arrive within a few minutes."
+        )
+    })
+
+    try:
+        user = User.objects.get(email__iexact=email)
+    except User.DoesNotExist:
+        return generic_ok  # silent — don't expose whether email exists
+
+    # Rate-limit: one request per 2 minutes per user
+    rate_key = f'pwd_reset_rate_{user.id}'
+    if cache.get(rate_key):
+        return Response(
+            {'error': 'A reset link was already sent recently. Please wait a moment.'},
+            status=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+
+    # Generate a secure token and store uid+token in cache (1 hour TTL)
+    token    = secrets.token_urlsafe(48)
+    cache_key = f'pwd_reset_{token}'
+    cache.set(cache_key, {'user_id': user.id}, timeout=3600)
+    cache.set(rate_key, True, timeout=120)
+
+    # Build the reset URL -- points to the frontend page
+    frontend_base = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:8000').rstrip('/')
+    reset_url = f'{frontend_base}/pages/forgot-password.html?token={token}'
+
+    # Send email + SMS reset notifications
+    try:
+        from users.email_service import email_service
+        email_service.send_password_reset(user, reset_url, expiry_hours=1)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f'Password reset email failed for {email}: {e}')
+
+    try:
+        from users.sms_service import sms_service
+        sms_service.send_password_reset(user, reset_url)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f'Password reset SMS failed for {email}: {e}')
+
+    return generic_ok
+
+
+@csrf_exempt
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([permissions.AllowAny])
+def password_reset_confirm_view(request):
+    """
+    Step 2 -- User submits new password + the token from the email link.
+    Validates token, sets the new password, invalidates all existing tokens.
+    """
+    from django.core.cache import cache
+
+    token        = (request.data.get('token') or '').strip()
+    new_password = (request.data.get('new_password') or '').strip()
+    confirm      = (request.data.get('confirm_password') or '').strip()
+
+    if not token:
+        return Response({'error': 'Reset token is missing.'}, status=status.HTTP_400_BAD_REQUEST)
+    if not new_password:
+        return Response({'error': 'Please enter a new password.'}, status=status.HTTP_400_BAD_REQUEST)
+    if len(new_password) < 8:
+        return Response({'error': 'Password must be at least 8 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+    if new_password != confirm:
+        return Response({'error': 'Passwords do not match.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Look up token in cache
+    cache_key = f'pwd_reset_{token}'
+    data = cache.get(cache_key)
+    if not data:
+        return Response(
+            {'error': 'This reset link has expired or already been used. Please request a new one.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        user = User.objects.get(id=data['user_id'])
+    except User.DoesNotExist:
+        return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Set new password
+    user.set_password(new_password)
+    user.save(update_fields=['password'])
+
+    # Invalidate the token immediately (one-time use)
+    cache.delete(cache_key)
+
+    # Invalidate all existing auth tokens so old sessions can't continue
+    Token.objects.filter(user=user).delete()
+
+    return Response({'message': 'Password reset successfully. You can now log in with your new password.'})

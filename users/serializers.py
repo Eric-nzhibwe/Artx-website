@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 """
-User serializers — ARTX Platform
+User serializers - ARTX Platform
 """
 from rest_framework import serializers
 from django.contrib.auth import authenticate
@@ -35,7 +36,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def validate(self, data):
         password_confirm = data.get('password_confirm')
         if password_confirm and data['password'] != password_confirm:
-            raise serializers.ValidationError({'password_confirm': "Passwords don't match."})
+            raise serializers.ValidationError({"password_confirm": "Passwords don't match."})
         return data
 
     def create(self, validated_data):
@@ -44,72 +45,27 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
         user = User.objects.create_user(password=password, **validated_data)
 
-        # Send welcome email — never block registration if this fails
+        # Send welcome email + SMS via the central services.
+        # Never block registration if this fails.
         try:
-            _send_welcome_email(user)
-        except Exception as e:
+            from users.email_service import email_service
+            email_service.send_welcome(user)
+        except Exception as exc:
             import logging
-            logging.getLogger(__name__).warning(f"Welcome email failed for {user.email}: {e}")
+            logging.getLogger(__name__).warning(
+                "Welcome email failed for %s: %s", user.email, exc
+            )
+
+        try:
+            from users.sms_service import sms_service
+            sms_service.send_welcome(user)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                "Welcome SMS failed for %s: %s", user.username, exc
+            )
 
         return user
-
-
-def _send_welcome_email(user):
-    """Send a welcome email to a newly registered user."""
-    from django.core.mail import send_mail
-    from django.conf import settings
-
-    subject = 'Welcome to ARTX Platform!'
-    plain = (
-        f"Hi {user.username},\n\n"
-        f"Your account has been created successfully. "
-        f"You can now log in and start playing.\n\n"
-        f"Welcome to ARTX!\n\nThe ARTX Team"
-    )
-    html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body {{ font-family:Arial,sans-serif; background:#f4f4f4; margin:0; padding:0; }}
-    .wrap {{ max-width:560px; margin:40px auto; background:#fff;
-             border-radius:12px; overflow:hidden;
-             box-shadow:0 4px 20px rgba(0,0,0,.08); }}
-    .header {{ background:linear-gradient(135deg,#6c63ff,#3b2dbf);
-               padding:36px; text-align:center; color:#fff; }}
-    .header h1 {{ margin:0; font-size:26px; }}
-    .body {{ padding:32px; color:#333; line-height:1.7; }}
-    .btn {{ display:inline-block; margin:24px 0; padding:14px 36px;
-            background:#6c63ff; color:#fff; border-radius:8px;
-            text-decoration:none; font-weight:bold; font-size:16px; }}
-    .footer {{ text-align:center; padding:20px; color:#aaa; font-size:12px; }}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="header"><h1>🎮 Welcome to ARTX!</h1></div>
-    <div class="body">
-      <p>Hi <strong>{user.username}</strong>,</p>
-      <p>Your account has been created successfully. You're all set to start competing!</p>
-      <a href="{getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:8000')}" class="btn">
-        Go to ARTX
-      </a>
-      <p>Good luck and have fun!</p>
-    </div>
-    <div class="footer">© ARTX Platform &nbsp;|&nbsp; This is an automated message.</div>
-  </div>
-</body>
-</html>
-"""
-    send_mail(
-        subject=subject,
-        message=plain,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        html_message=html,
-        fail_silently=False,
-    )
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -144,24 +100,55 @@ class UserLoginSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     success_rate       = serializers.ReadOnlyField()
     social_connections = serializers.JSONField(read_only=True)
+    followers_count    = serializers.SerializerMethodField()
+    following_count    = serializers.SerializerMethodField()
+    profile_image_url  = serializers.SerializerMethodField()
 
     class Meta:
         model  = User
         fields = [
             'id', 'username', 'email', 'display_name', 'bio', 'profile_image',
+            'profile_image_url',
             'phone', 'date_of_birth', 'location', 'website', 'preferences',
             'prestige_points', 'level', 'power_rank', 'access_tier',
             'current_streak', 'total_submissions', 'successful_submissions',
             'success_rate', 'total_earnings', 'tournament_wins',
             'is_verified', 'verification_level', 'social_connections',
             'created_at', 'last_login_date',
+            'followers_count', 'following_count',
         ]
         read_only_fields = [
             'id', 'prestige_points', 'level', 'power_rank', 'access_tier',
             'current_streak', 'total_submissions', 'successful_submissions',
             'success_rate', 'total_earnings', 'tournament_wins',
             'is_verified', 'verification_level', 'created_at', 'last_login_date',
+            'followers_count', 'following_count', 'profile_image_url',
         ]
+
+    def get_followers_count(self, obj):
+        return obj.followers.count()
+
+    def get_following_count(self, obj):
+        return obj.following.count()
+
+    def get_profile_image_url(self, obj):
+        """
+        Return the profile image URL only if the file actually exists on disk.
+        On Render (ephemeral filesystem) uploaded files are lost on restart --
+        returning a broken URL causes 404 log spam and broken avatar images.
+        Falls back to None so the frontend can show a generated avatar instead.
+        """
+        if not obj.profile_image:
+            return None
+        try:
+            if obj.profile_image.storage.exists(obj.profile_image.name):
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(obj.profile_image.url)
+                return obj.profile_image.url
+        except Exception:
+            pass
+        return None
 
 
 class UserActivitySerializer(serializers.ModelSerializer):

@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
@@ -31,6 +32,7 @@ class PostViewSet(viewsets.ModelViewSet):
     """
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
     pagination_class = StandardResultsSetPagination
     
     def get_queryset(self):
@@ -139,6 +141,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     """
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
 
     def get_queryset(self):
         """Get top-level comments for a specific post."""
@@ -211,6 +214,7 @@ class FollowViewSet(viewsets.ViewSet):
     ViewSet for Follow relationships with real-time updates
     """
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
     
     @action(detail=False, methods=['post'])
     def follow(self, request):
@@ -300,6 +304,22 @@ class FollowViewSet(viewsets.ViewSet):
         
         return Response({'is_following': is_following})
 
+    @action(detail=False, methods=['get'])
+    def counts(self, request):
+        """Return follower count, following count, and is_following for a user."""
+        user_id = request.query_params.get('user_id', request.user.id)
+        user = get_object_or_404(User, id=user_id)
+        is_following = Follow.objects.filter(
+            follower=request.user,
+            following=user
+        ).exists()
+        return Response({
+            'user_id':         user.id,
+            'followers_count': Follow.objects.filter(following=user).count(),
+            'following_count': Follow.objects.filter(follower=user).count(),
+            'is_following':    is_following,
+        })
+
 
 class StoryViewSet(viewsets.ModelViewSet):
     """
@@ -307,8 +327,14 @@ class StoryViewSet(viewsets.ModelViewSet):
     """
     serializer_class = StorySerializer
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
     pagination_class = StandardResultsSetPagination
-    
+
+    def get_parsers(self):
+        """Accept both JSON and multipart (file upload)."""
+        from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+        return [MultiPartParser(), FormParser(), JSONParser()]
+
     def get_queryset(self):
         """Get non-expired stories from followed users"""
         from django.utils import timezone

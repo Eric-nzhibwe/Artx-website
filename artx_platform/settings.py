@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Django settings for ARTX Platform
 """
@@ -20,7 +21,7 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver'
 if 'testserver' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('testserver')
 
-# Render sets RENDER_EXTERNAL_HOSTNAME automatically — add it so Django
+# Render sets RENDER_EXTERNAL_HOSTNAME automatically -- add it so Django
 # doesn't return 400 Bad Request on production without manual config
 _render_host = config('RENDER_EXTERNAL_HOSTNAME', default='')
 if _render_host and _render_host not in ALLOWED_HOSTS:
@@ -102,38 +103,67 @@ if REDIS_URL:
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
                 'hosts': [REDIS_URL],
+                'capacity': 100,        # max messages per channel
+                'expiry':   10,         # seconds before message expires
             },
         },
     }
 else:
-    # No Redis available — InMemoryChannelLayer works fine for
-    # a single-dyno Render deployment (free tier).
-    # WebSocket broadcasts are in-process only; scale-out would
-    # require Redis, but for now this keeps WS fully functional.
+    # No Redis -- InMemoryChannelLayer with a capped capacity to prevent
+    # unbounded RAM growth on Render's free tier.
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels.layers.InMemoryChannelLayer',
+            'CONFIG': {
+                'capacity': 50,   # drop oldest messages when full
+                'expiry':   10,
+            },
         },
     }
 
 # Database
 import dj_database_url
 
-# Render provides DATABASE_URL. Fix postgres:// → postgresql:// for Django compatibility.
+# Support both URL-style and keyword-style (psycopg2) connection strings.
+# Supabase's URI format can confuse Python 3.11's urlparse when the password
+# contains special characters or hyphens, so we also accept individual vars.
 _raw_db_url = config('DATABASE_URL', default=None)
-if _raw_db_url and _raw_db_url.startswith('postgres://'):
-    _raw_db_url = _raw_db_url.replace('postgres://', 'postgresql://', 1)
 
-if _raw_db_url:
+# Individual component overrides — set these instead of DATABASE_URL if the
+# URL keeps failing to parse (e.g. Supabase with a complex password).
+_db_host     = config('DB_HOST',     default=None)
+_db_name     = config('DB_NAME',     default='postgres')
+_db_user     = config('DB_USER',     default='postgres')
+_db_password = config('DB_PASSWORD', default=None)
+_db_port     = config('DB_PORT',     default='5432')
+
+if _db_host and _db_password:
+    # Explicit component vars take priority — avoids all URL-parsing issues
+    DATABASES = {
+        'default': {
+            'ENGINE':   'django.db.backends.postgresql',
+            'NAME':     _db_name,
+            'USER':     _db_user,
+            'PASSWORD': _db_password,
+            'HOST':     _db_host,
+            'PORT':     _db_port,
+            'OPTIONS':  {'sslmode': 'require'} if not DEBUG else {},
+            'CONN_MAX_AGE': 60,
+        }
+    }
+elif _raw_db_url:
+    # Fix postgres:// → postgresql:// for Django compatibility
+    if _raw_db_url.startswith('postgres://'):
+        _raw_db_url = _raw_db_url.replace('postgres://', 'postgresql://', 1)
     DATABASES = {
         'default': dj_database_url.config(
             default=_raw_db_url,
-            conn_max_age=600,
+            conn_max_age=60,        # 60 s -- avoids exhausting free-tier connection pool
             ssl_require=not DEBUG,
         )
     }
 else:
-    # Local development only — SQLite
+    # Local development only -- SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -174,13 +204,22 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Auto-create required media subdirectories on startup
+# so a fresh clone never 404s on missing upload folders
+for _media_dir in ['profiles', 'posts', 'messages']:
+    (BASE_DIR / 'media' / _media_dir).mkdir(parents=True, exist_ok=True)
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Cap request sizes to protect free-tier RAM (5 MB body, 3 MB per file)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024   # 5 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 3 * 1024 * 1024   # 3 MB
 
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
 
-# Authentication backends — email-first login
+# Authentication backends -- email-first login
 AUTHENTICATION_BACKENDS = [
     'users.backends.EmailOrUsernameBackend',
     'django.contrib.auth.backends.ModelBackend',
@@ -189,8 +228,11 @@ AUTHENTICATION_BACKENDS = [
 # REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+        # TokenAuthentication MUST be first -- SessionAuthentication enforces
+        # CSRF on POST requests which breaks token-authenticated API calls
+        # from the frontend (no CSRF cookie is sent with fetch requests).
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -224,7 +266,7 @@ if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 else:
     CORS_ALLOW_ALL_ORIGINS = False
-    # Render automatically sets RENDER_EXTERNAL_URL — add it so the
+    # Render automatically sets RENDER_EXTERNAL_URL -- add it so the
     # frontend can talk to the backend without a manual env var update
     _render_url = config('RENDER_EXTERNAL_URL', default='').rstrip('/')
     if _render_url and _render_url not in CORS_ALLOWED_ORIGINS:
@@ -245,22 +287,76 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# Email Configuration
-# Set to 'console' to print emails to terminal (for testing)
-# Set to 'smtp' to send real emails via Gmail
-EMAIL_MODE = config('EMAIL_MODE', default='smtp')
+# ─── Email Configuration ───────────────────────────────────────────────────────
+#
+# EMAIL_PROVIDER controls which sending backend is used:
+#
+#   resend  (recommended for Render free tier)
+#           Sends over HTTPS/443 -- not blocked by Render's free plan.
+#           Requires RESEND_API_KEY.
+#           Free tier: 3,000 emails/month -- https://resend.com
+#
+#   smtp    Direct SMTP. Works locally or on paid hosting.
+#           Blocked by Render free tier (Errno 101).
+#
+#   console Prints emails to stdout. Local dev only, nothing is sent.
+#
+EMAIL_PROVIDER = config('EMAIL_PROVIDER', default='console')
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+# Resend (used when EMAIL_PROVIDER=resend)
+RESEND_API_KEY = config('RESEND_API_KEY', default='')
 
-if EMAIL_MODE == 'console':
+# SMTP credentials (used when EMAIL_PROVIDER=smtp)
+EMAIL_HOST          = config('EMAIL_HOST',          default='smtp.gmail.com')
+EMAIL_PORT          = config('EMAIL_PORT',           default=587, cast=int)
+EMAIL_USE_TLS       = config('EMAIL_USE_TLS',        default=True, cast=bool)
+EMAIL_HOST_USER     = config('EMAIL_HOST_USER',      default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD',  default='')
+EMAIL_TIMEOUT       = 10   # seconds
+
+# Django email backend -- kept in sync with EMAIL_PROVIDER so Django's
+# built-in send_mail() also works correctly if called anywhere directly.
+if EMAIL_PROVIDER == 'console':
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    # Both 'resend' and 'smtp' use the SMTP backend as a base;
+    # email_service.py handles Resend separately via HTTPS.
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='ARTX Platform <noreply@artx.com>')
+DEFAULT_FROM_EMAIL = config(
+    'DEFAULT_FROM_EMAIL',
+    default='ARTX Platform <noreply@artxplatform.com>'
+)
+
+# Base URL used in email CTA buttons (password reset link etc.)
+# Must be set to your Render URL in production.
+FRONTEND_BASE_URL = config('FRONTEND_BASE_URL', default='http://localhost:8000')
+
+# ─── SMS Configuration ────────────────────────────────────────────────────────
+#
+# SMS_PROVIDER controls which sending backend is used:
+#
+#   twilio          Global coverage. Requires TWILIO_ACCOUNT_SID,
+#                   TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER.
+#                   Free trial: https://www.twilio.com/try-twilio
+#
+#   africastalking  Better rates for African numbers. Requires
+#                   AFRICASTALKING_USERNAME and AFRICASTALKING_API_KEY.
+#                   Free sandbox: https://africastalking.com/
+#
+#   console         Prints SMS to stdout. Local dev only, nothing is sent.
+#
+SMS_PROVIDER = config('SMS_PROVIDER', default='console')
+
+# Twilio (used when SMS_PROVIDER=twilio)
+TWILIO_ACCOUNT_SID  = config('TWILIO_ACCOUNT_SID',  default='')
+TWILIO_AUTH_TOKEN   = config('TWILIO_AUTH_TOKEN',   default='')
+TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
+
+# Africa's Talking (used when SMS_PROVIDER=africastalking)
+AFRICASTALKING_USERNAME  = config('AFRICASTALKING_USERNAME',  default='')
+AFRICASTALKING_API_KEY   = config('AFRICASTALKING_API_KEY',   default='')
+AFRICASTALKING_SENDER_ID = config('AFRICASTALKING_SENDER_ID', default='ARTX')
 
 # Payment Provider Configuration
 # ⚠️ IMPORTANT: All API keys should be in .env file, NOT in code
@@ -269,67 +365,115 @@ STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
 
 # PawaPay Configuration (African Mobile Money)
-PAWAPAY_API_KEY = config('PAWAPAY_API_KEY', default='eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjE4NjI3IiwibWF2IjoiMSIsImV4cCI6MjA5NTE1MTkxNywiaWF0IjoxNzc5NTMyNzE3LCJwbSI6IkRBRixQQUYiLCJqdGkiOiIxOWU5MGYwMy0xMmZkLTQ5ODktOTZkMC0zMWFiMzdhMTYwODkifQ.bSbEHIQVAyBBZepcNDvbOQWbCagX7vri4MNdGsHlQJRDGwGD1qnxZBEFZwddiW3ynjMZhcTdgLRBKmKJBBNEEg')
+PAWAPAY_API_KEY = config('PAWAPAY_API_KEY', default='')
 PAWAPAY_API_URL = config('PAWAPAY_API_URL', default='https://api.pawapay.cloud')
 PAWAPAY_WEBHOOK_SECRET = config('PAWAPAY_WEBHOOK_SECRET', default='')
 
+# Paystack
+PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY', default='')
+
 # OpenAI Configuration (for AI Chatbot)
 # ⚠️ IMPORTANT: Keep this in .env file ONLY - DO NOT commit to git
-OPENAI_API_KEY = config('OPENAI_API_KEY', default='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')
+OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
 
-# Logging
+# Google Gemini (free tier -- recommended)
+# Get key at https://aistudio.google.com/app/apikey
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+
+# Groq / LLaMA 3.3 (free tier -- PRIMARY AI engine)
+# Get key at https://console.groq.com/keys
+GROQ_API_KEY = config('GROQ_API_KEY', default='')
+
+# Logging -- console-only (no filesystem writes; Render's disk is ephemeral)
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+        'simple': {
+            'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
+    },
+    'filters': {
+        # Suppress 404 warnings for /media/ paths -- these are expected on Render
+        # where the ephemeral filesystem loses uploaded files on restart.
+        # All other 404s still log normally.
+        'suppress_media_404': {
+            '()': 'django.utils.log.CallbackFilter',
+            'callback': lambda record: not (
+                record.levelname == 'WARNING'
+                and hasattr(record, 'status_code')
+                and record.status_code == 404
+                and '/media/' in getattr(getattr(record, 'request', None), 'path', '')
+            ),
         },
     },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'artx.log',
-            'formatter': 'verbose',
-        },
         'console': {
-            'level': 'INFO',
+            'level': 'WARNING',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
+            'filters': ['suppress_media_404'],
         },
     },
     'loggers': {
-        'artx_platform.frontend_views': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
+        'django': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+            'filters': ['suppress_media_404'],
+        },
+        'artx_platform': {
+            'handlers': ['console'],
+            'level': 'WARNING',
             'propagate': False,
         },
         'payments': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'users': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'users.email_service': {
+            'handlers': ['console'],
+            'level': 'WARNING',
             'propagate': False,
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO',
+        'handlers': ['console'],
+        'level': 'WARNING',
     },
 }
 
-# Create logs directory with proper error handling
-LOGS_DIR = BASE_DIR / 'logs'
-if not LOGS_DIR.exists():
-    try:
-        LOGS_DIR.mkdir(parents=True, mode=0o755, exist_ok=True)
-    except Exception as e:
-        import warnings
-        warnings.warn(f"Could not create logs directory: {e}")
+# CSRF trusted origins -- built unconditionally so it works in both
+# DEBUG and non-DEBUG modes. Render sets RENDER_EXTERNAL_HOSTNAME and
+# RENDER_EXTERNAL_URL automatically; CSRF_TRUSTED_ORIGINS env var is an
+# explicit escape-hatch for any additional domains.
+_csrf_origins = ['http://localhost:8000', 'http://127.0.0.1:8000']
+if _render_host:
+    _csrf_origins.append(f'https://{_render_host}')
+_render_ext_url = config('RENDER_EXTERNAL_URL', default='').rstrip('/')
+if _render_ext_url and _render_ext_url not in _csrf_origins:
+    _csrf_origins.append(_render_ext_url)
+_extra_origins = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='',
+    cast=lambda v: [s.strip() for s in v.split(',') if s.strip()]
+)
+for _o in _extra_origins:
+    if _o not in _csrf_origins:
+        _csrf_origins.append(_o)
+CSRF_TRUSTED_ORIGINS = _csrf_origins
 
 # Security settings for production
 if not DEBUG:
@@ -338,14 +482,10 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_REDIRECT_EXEMPT = []
-    # Render terminates SSL at its proxy — tell Django the request is HTTPS
+    # Render terminates SSL at its proxy -- tell Django the request is HTTPS
     # when the X-Forwarded-Proto header says so. Without this, Django thinks
     # all requests are HTTP and the admin login CSRF check fails.
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    # Allow the admin to work inside Render's iframe-based preview
-    CSRF_TRUSTED_ORIGINS = [
-        f'https://{_render_host}',
-    ] if _render_host else []
